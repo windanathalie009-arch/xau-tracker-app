@@ -1,0 +1,17 @@
+{
+  "name": "XAU Tracker — Winda's Trading Hub",
+  "short_name": "XAU⚡",
+  "description": "XAUUSD trading journal, economic calendar, and Telegram alerts",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111008",
+  "theme_color": "#C9A84C",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

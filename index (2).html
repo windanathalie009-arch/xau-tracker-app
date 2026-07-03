@@ -1,0 +1,2982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XAU Tracker — Winda</title>
+<link rel="manifest" href="manifest.json">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#C9A84C;--gold-dim:#8B6914;--gold-bg:#1A1500;
+  --surface:#111008;--s2:#1C1A0F;--s3:#252210;
+  --border:#2E2A14;--border2:#3D3820;
+  --text:#F0ECD8;--t2:#A09870;--t3:#5C5630;
+  --green:#4CAF7D;--gbg:#0A1F12;
+  --red:#E05C5C;--rbg:#1F0A0A;
+  --blue:#5B9BD5;--bbg:#0A1220;
+  --purple:#9B7FDD;--pbg:#150A2A;
+  --mono:'IBM Plex Mono',monospace;--sans:'Inter',sans-serif;
+}
+body{background:var(--surface);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
+.topbar{background:var(--s2);border-bottom:1px solid var(--border);padding:0 14px;display:flex;align-items:center;height:50px;gap:10px;position:sticky;top:0;z-index:100}
+.logo{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--gold);letter-spacing:.1em;flex-shrink:0}
+.pstrip{display:flex;gap:12px;margin-left:auto;align-items:center}
+.pi{text-align:right}
+.pl{font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:var(--t3)}
+.pv{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--text)}
+.pv.gold{color:var(--gold)}.pv.up{color:var(--green)}.pv.dn{color:var(--red)}
+.alert-bar{display:none;padding:9px 14px;font-size:11px;align-items:center;gap:8px;border-bottom:1px solid}
+.alert-bar.show{display:flex}
+.alert-bar.warn{background:#1A1200;border-color:var(--gold-dim);color:var(--gold)}
+.alert-bar.danger{background:var(--rbg);border-color:#A32D2D;color:var(--red)}
+.alert-bar.dd{background:#1A0A20;border-color:#7F3DB0;color:var(--purple)}
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tb{padding:10px 13px;font-size:11px;font-weight:500;color:var(--t2);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;font-family:var(--sans);transition:.15s}
+.tb:hover{color:var(--text)}.tb.active{color:var(--gold);border-bottom-color:var(--gold)}
+.panels{padding:14px;max-width:1100px;margin:0 auto}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px}
+.card.gold-border{border-color:var(--gold-dim)}
+.ct{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin-bottom:10px;font-weight:500}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin-bottom:12px}
+.scard{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:11px}
+.sl{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:3px}
+.sv{font-family:var(--mono);font-size:19px;font-weight:500;color:var(--text)}
+.sv.gold{color:var(--gold)}.sv.green{color:var(--green)}.sv.red{color:var(--red)}.sv.purple{color:var(--purple)}
+.ss{font-size:10px;color:var(--t3);margin-top:2px}
+.prog-wrap{margin:8px 0}
+.prog-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--t2);margin-bottom:5px}
+.prog-track{height:7px;background:var(--s3);border-radius:999px;overflow:hidden}
+.prog-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--gold-dim),var(--gold));transition:width .5s}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg.full{grid-column:1/-1}
+label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);font-weight:500}
+input,select,textarea{background:var(--s3);border:1px solid var(--border2);border-radius:6px;color:var(--text);padding:7px 9px;font-family:var(--mono);font-size:12px;width:100%;transition:.15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold-dim)}
+select option{background:var(--s2)}
+textarea{resize:vertical;min-height:52px;font-family:var(--sans);font-size:12px}
+.btn{padding:8px 16px;border-radius:6px;border:none;cursor:pointer;font-family:var(--sans);font-size:12px;font-weight:500;transition:.15s}
+.btn-gold{background:var(--gold);color:#000}.btn-gold:hover{background:#D4B050}
+.btn-out{background:none;border:1px solid var(--border2);color:var(--t2)}.btn-out:hover{border-color:var(--gold-dim);color:var(--text)}
+.btn-sm{padding:4px 9px;font-size:11px;border-radius:4px}
+.btn-red{background:none;border:1px solid #5C2020;color:var(--red)}.btn-red:hover{background:var(--rbg)}
+.btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center}
+.badge{font-size:10px;padding:2px 8px;border-radius:999px;font-weight:500;display:inline-block}
+.badge.buy{background:#0A2015;color:var(--green)}
+.badge.sell{background:var(--rbg);color:var(--red)}
+.badge.open{background:var(--gold-bg);color:var(--gold)}
+.ttbl{width:100%;border-collapse:collapse;font-size:12px}
+.ttbl th{text-align:left;padding:7px 9px;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);border-bottom:1px solid var(--border);font-weight:500}
+.ttbl td{padding:8px 9px;border-bottom:1px solid var(--border);color:var(--t2);vertical-align:middle}
+.ttbl tr:hover td{background:var(--s3)}
+.bar-row{display:flex;align-items:center;gap:9px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
+.bar-row:last-child{border-bottom:none}
+.bd{font-family:var(--mono);color:var(--t2);width:76px;flex-shrink:0;font-size:11px}
+.bw{flex:1;height:5px;background:var(--s3);border-radius:3px;overflow:hidden}
+.bf{height:100%;border-radius:3px}
+.bv{font-family:var(--mono);font-size:11px;width:64px;text-align:right;flex-shrink:0}
+.cal-row{display:grid;grid-template-columns:85px 70px 1fr 90px;gap:7px;align-items:center;padding:8px 10px;border-radius:6px;margin-bottom:3px;border:1px solid var(--border);background:var(--s3);font-size:12px}
+.cal-row.hi{border-left:3px solid var(--red)}
+.cal-row.med{border-left:3px solid var(--gold)}
+.cal-row.lo{border-left:3px solid var(--t3)}
+.cal-row.imm{background:var(--rbg);animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+.idot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block}
+.idot.hi{background:var(--red)}.idot.med{background:var(--gold)}.idot.lo{background:var(--t3)}
+.cd{font-family:var(--mono);font-size:11px;color:var(--t3)}
+.cd.soon{color:var(--red);font-weight:500}
+.sr-zone{background:var(--s3);border-radius:6px;padding:9px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;font-size:12px}
+.sr-price{font-family:var(--mono);font-size:14px;font-weight:500}
+.checklist-item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)}
+.checklist-item:last-child{border-bottom:none}
+.chk{width:20px;height:20px;border-radius:4px;border:1.5px solid var(--border2);flex-shrink:0;cursor:pointer;background:var(--s3);display:flex;align-items:center;justify-content:center;transition:.15s}
+.chk.done{background:var(--green);border-color:var(--green)}
+.chk.done::after{content:'✓';color:#000;font-size:11px;font-weight:700}
+.chk.fail{background:var(--red);border-color:var(--red)}
+.chk.fail::after{content:'✕';color:#fff;font-size:11px;font-weight:700}
+.clbl{font-size:13px;color:var(--text)}
+.csub{font-size:11px;color:var(--t3);margin-top:2px}
+.ni-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
+.ni-row:last-child{border-bottom:none}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--s2);border:1px solid var(--gold-dim);border-radius:8px;padding:11px 16px;font-size:12px;color:var(--gold);z-index:9999;transform:translateY(80px);opacity:0;transition:.3s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.err{border-color:#A32D2D;color:var(--red)}
+.upload-zone{border:2px dashed var(--border2);border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:.15s}
+.upload-zone:hover{border-color:var(--gold-dim);background:var(--gold-bg)}
+.emotion-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:8px 0}
+.emo-btn{padding:8px 4px;border-radius:8px;border:1px solid var(--border2);background:var(--s3);cursor:pointer;text-align:center;font-size:18px;transition:.15s}
+.emo-btn:hover{border-color:var(--gold-dim)}
+.emo-btn.selected{border-color:var(--gold);background:var(--gold-bg)}
+.emo-label{font-size:9px;color:var(--t3);margin-top:3px;display:block}
+.streak-badge{display:inline-flex;align-items:center;gap:6px;background:var(--gold-bg);border:1px solid var(--gold-dim);border-radius:8px;padding:8px 14px;font-family:var(--mono);font-size:16px;font-weight:500;color:var(--gold)}
+.session-pill{font-size:10px;padding:2px 8px;border-radius:999px;font-weight:500}
+.sp-london{background:#0A1220;color:var(--blue)}
+.sp-ny{background:#1F0A0A;color:var(--red)}
+.sp-asian{background:var(--pbg);color:var(--purple)}
+.sp-other{background:var(--s3);color:var(--t2)}
+.type-pill{font-size:10px;padding:2px 8px;border-radius:999px;font-weight:500}
+.tp-contra{background:#150A2A;color:var(--purple)}
+.tp-trend{background:var(--gbg);color:var(--green)}
+canvas{width:100%!important;max-width:100%}
+@media(max-width:600px){.fgrid{grid-template-columns:1fr}.pstrip .pi:nth-child(n+3){display:none}.sgrid{grid-template-columns:1fr 1fr}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">XAU⚡</div>
+  <div class="pstrip">
+    <div class="pi"><div class="pl">XAUUSD</div><div class="pv gold" id="hdr-xau">$4,063</div></div>
+    <div class="pi"><div class="pl">Equity</div><div class="pv gold" id="hdr-eq">$300.00</div></div>
+    <div class="pi"><div class="pl">Today</div><div class="pv" id="hdr-today">$0.00</div></div>
+    <div class="pi"><div class="pl">Streak</div><div class="pv" id="hdr-streak">—</div></div>
+  </div>
+  <button style="background:none;border:1px solid var(--border2);border-radius:6px;color:var(--t2);padding:4px 9px;cursor:pointer;font-size:11px;margin-left:8px" id="notif-btn" onclick="setupNotif()">🔔</button>
+</div>
+
+<div class="alert-bar" id="alert-bar"></div>
+
+<div class="tabs">
+  <button class="tb active" onclick="sw('dashboard',this)">Dashboard</button>
+  <button class="tb" onclick="sw('calendar',this)">Calendar</button>
+  <button class="tb" onclick="sw('log',this)">+ Trade</button>
+  <button class="tb" onclick="sw('checklist',this)">Checklist</button>
+  <button class="tb" onclick="sw('trades',this)">My Trades</button>
+  <button class="tb" onclick="sw('equity',this)">Equity Chart</button>
+  <button class="tb" onclick="sw('news',this)">News Log</button>
+  <button class="tb" onclick="sw('analysis',this)">Analysis</button>
+  <button class="tb" onclick="sw('withdrawals',this)">Withdraw</button>
+  <button class="tb" onclick="sw('import',this)">MT5 Import</button>
+  <button class="tb" onclick="sw('photo',this)">📷 Photo Import</button>
+  <button class="tb" onclick="sw('setup',this)">Setup</button>
+</div>
+
+<div class="panels">
+
+<!-- DASHBOARD -->
+<div id="panel-dashboard" class="panel active">
+  <div class="sgrid">
+    <div class="scard"><div class="sl">Equity</div><div class="sv gold" id="d-eq">$300.00</div><div class="ss">Base $300</div></div>
+    <div class="scard"><div class="sl">Today P&L</div><div class="sv" id="d-today">$0.00</div><div class="ss" id="d-today-sub">0 trades</div></div>
+    <div class="scard"><div class="sl">Win Rate</div><div class="sv green" id="d-wr">—</div><div class="ss" id="d-wr-sub">0 closed</div></div>
+    <div class="scard"><div class="sl">Streak</div><div class="sv gold" id="d-streak">—</div><div class="ss" id="d-streak-sub">current</div></div>
+    <div class="scard"><div class="sl">Withdrawn</div><div class="sv gold" id="d-with">$0.00</div><div class="ss" id="d-cycles">0 cycles</div></div>
+    <div class="scard"><div class="sl">Days Hit $40</div><div class="sv green" id="d-hit">0</div><div class="ss">target days</div></div>
+  </div>
+  <div class="card">
+    <div class="ct">Progress to withdrawal</div>
+    <div class="prog-wrap">
+      <div class="prog-lbl"><span id="pg-eq">$300</span><span id="pg-pct">0%</span><span style="color:var(--gold)" id="pg-tgt">$500</span></div>
+      <div class="prog-track"><div class="prog-fill" id="pg-fill" style="width:0%"></div></div>
+    </div>
+    <div style="font-size:11px;color:var(--t3);margin-top:5px" id="pg-sub"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="card"><div class="ct">Open positions</div><div id="d-opens"></div></div>
+    <div class="card"><div class="ct">Next news</div><div id="d-news"></div></div>
+  </div>
+  <div class="card"><div class="ct">Daily P&L — last 10 sessions</div><div id="d-chart"></div></div>
+  <div class="card"><div class="ct">Drawdown alert</div>
+    <div id="d-dd" style="font-size:12px;color:var(--t2)">No drawdown alert today.</div>
+  </div>
+</div>
+
+<!-- CALENDAR -->
+<div id="panel-calendar" class="panel">
+  <div class="card">
+    <div class="ct">Economic calendar — XAUUSD impact events</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      <button class="btn btn-sm btn-gold" onclick="fCal('ALL')">All</button>
+      <button class="btn btn-sm btn-out" onclick="fCal('HIGH')">High only</button>
+      <button class="btn btn-sm btn-out" onclick="fCal('TODAY')">Today</button>
+      <span style="margin-left:auto;font-size:10px;color:var(--t3)" id="cal-upd"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:85px 70px 1fr 90px;gap:7px;padding:0 10px;margin-bottom:5px">
+      <span style="font-size:9px;color:var(--t3);text-transform:uppercase">Time WIB</span>
+      <span style="font-size:9px;color:var(--t3);text-transform:uppercase">Impact</span>
+      <span style="font-size:9px;color:var(--t3);text-transform:uppercase">Event</span>
+      <span style="font-size:9px;color:var(--t3);text-transform:uppercase">Countdown</span>
+    </div>
+    <div id="cal-list"></div>
+  </div>
+  <div class="card"><div class="ct">Fixed upcoming dates</div><div id="cal-fixed"></div></div>
+</div>
+
+<!-- LOG TRADE -->
+<div id="panel-log" class="panel">
+  <div id="log-news-warn" style="display:none;margin-bottom:10px;padding:10px 14px;border-radius:8px;background:var(--rbg);border:1px solid #A32D2D;font-size:12px;color:var(--red)"></div>
+
+  <!-- S/R Levels -->
+  <div class="card gold-border" id="sr-card">
+    <div class="ct" style="color:var(--gold)">1H nearest support & resistance — XAUUSD</div>
+    <div id="sr-loading" style="font-size:12px;color:var(--t2)">Loading levels...</div>
+    <div id="sr-content" style="display:none">
+      <div style="font-size:11px;color:var(--t3);margin-bottom:8px" id="sr-price-ref"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div style="font-size:10px;color:var(--red);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Resistance above</div>
+          <div id="sr-resist"></div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Support below</div>
+          <div id="sr-support"></div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--t3);margin-top:8px" id="sr-updated"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ct">Log trade — past or present (date/time fully editable)</div>
+    <div class="fgrid">
+      <div class="fg"><label>Date (edit for past)</label><input type="date" id="f-date"></div>
+      <div class="fg"><label>Time WIB (MT5 server +4h = WIB)</label><input type="time" id="f-time"></div>
+      <div class="fg"><label>Direction</label>
+        <select id="f-dir" onchange="autoCalc()">
+          <option value="BUY">BUY ↑</option><option value="SELL">SELL ↓</option>
+        </select>
+      </div>
+      <div class="fg"><label>Trade Type</label>
+        <select id="f-type">
+          <option value="Contra">Contra-trend</option><option value="Trend">Trend-following</option>
+        </select>
+      </div>
+      <div class="fg"><label>Session</label>
+        <select id="f-session">
+          <option value="London">London (14:00–18:00 WIB)</option>
+          <option value="NewYork">New York (19:00–23:00 WIB)</option>
+          <option value="Asian">Asian (00:00–07:00 WIB)</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="fg"><label>Lot Size</label><input type="number" id="f-lot" value="0.03" step="0.01" oninput="autoCalc()"></div>
+      <div class="fg"><label>Entry Price</label><input type="number" id="f-entry" placeholder="4063.50" step="0.01" oninput="autoCalc()"></div>
+      <div class="fg"><label>Equity at Open ($)</label><input type="number" id="f-eq-open" step="0.01"></div>
+      <div class="fg"><label>Status</label>
+        <select id="f-status" onchange="toggleExit()">
+          <option value="OPEN">Open (monitoring)</option><option value="CLOSED">Closed</option>
+        </select>
+      </div>
+      <div class="fg" id="fg-exit" style="display:none"><label>Exit Price</label><input type="number" id="f-exit" step="0.01" oninput="autoCalc()"></div>
+      <div class="fg" id="fg-pnl" style="display:none">
+        <label>P&L ($) — auto-calc, editable</label>
+        <input type="number" id="f-pnl" step="0.01" placeholder="Auto-calculated">
+        <span id="f-pnl-hint" style="font-size:10px;color:var(--t3);margin-top:2px"></span>
+      </div>
+      <div class="fg" id="fg-eqc" style="display:none"><label>Equity at Close ($)</label><input type="number" id="f-eq-close" step="0.01"></div>
+      <div class="fg full"><label>Emotional State before this trade</label>
+        <div class="emotion-grid" id="emo-grid">
+          <div class="emo-btn" onclick="selEmo('calm',this)">😌<span class="emo-label">Calm</span></div>
+          <div class="emo-btn" onclick="selEmo('confident',this)">💪<span class="emo-label">Confident</span></div>
+          <div class="emo-btn" onclick="selEmo('anxious',this)">😰<span class="emo-label">Anxious</span></div>
+          <div class="emo-btn" onclick="selEmo('greedy',this)">🤑<span class="emo-label">Greedy</span></div>
+          <div class="emo-btn" onclick="selEmo('revenge',this)">😤<span class="emo-label">Revenge</span></div>
+          <div class="emo-btn" onclick="selEmo('tired',this)">😴<span class="emo-label">Tired</span></div>
+          <div class="emo-btn" onclick="selEmo('excited',this)">🔥<span class="emo-label">Excited</span></div>
+          <div class="emo-btn" onclick="selEmo('fomo',this)">😱<span class="emo-label">FOMO</span></div>
+          <div class="emo-btn" onclick="selEmo('focused',this)">🎯<span class="emo-label">Focused</span></div>
+          <div class="emo-btn" onclick="selEmo('neutral',this)">😐<span class="emo-label">Neutral</span></div>
+        </div>
+      </div>
+      <div class="fg full"><label>Notes / Why I entered</label><textarea id="f-notes" placeholder="e.g. Contra-trend at $4,050 support. RSI oversold M5. Expecting bounce to $4,085."></textarea></div>
+      <div class="fg full"><label>News Active (auto-detected)</label><input type="text" id="f-news" placeholder="e.g. PCE pending — hawkish risk"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="saveTrade()">Save Trade</button>
+      <button class="btn btn-out" onclick="clearForm()">Clear</button>
+    </div>
+  </div>
+
+  <!-- Ask Claude -->
+  <div class="card gold-border">
+    <div class="ct" style="color:var(--gold)">Ask Claude — should I enter this trade?</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:8px">Fill the form above, then describe your chart reasoning below.</div>
+    <div class="fg full" style="margin-bottom:8px">
+      <label>What you see on the chart</label>
+      <textarea id="claude-q" style="min-height:64px" placeholder="e.g. Price bounced off $4,050 three times. RSI 28 on M5. DXY rolling over. Targeting $4,085."></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="askClaude()" id="ask-btn">Ask Claude ✦</button>
+      <span style="font-size:10px;color:var(--t3)">~$0.001 per analysis</span>
+    </div>
+    <div id="claude-box" style="display:none;margin-top:10px;background:var(--s3);border:1px solid var(--border2);border-radius:8px;padding:11px;font-size:12px;line-height:1.8;white-space:pre-wrap;color:var(--text)"></div>
+    <div id="claude-save-row" style="display:none;margin-top:7px">
+      <button class="btn btn-out btn-sm" onclick="saveAdvice()">Save to Analysis Log</button>
+    </div>
+  </div>
+
+  <!-- Close open trade -->
+  <div class="card" id="close-card" style="display:none">
+    <div class="ct">Close an open trade</div>
+    <div style="font-size:11px;color:var(--t3);margin-bottom:8px">P&L auto-calculated — edit if broker number differs.</div>
+    <div class="fgrid">
+      <div class="fg"><label>Select trade</label><select id="fc-id" onchange="calcClose()"></select></div>
+      <div class="fg"><label>Exit Price</label><input type="number" id="fc-exit" step="0.01" oninput="calcClose()"></div>
+      <div class="fg"><label>P&L ($) auto-calc</label><input type="number" id="fc-pnl" step="0.01"><span id="fc-hint" style="font-size:10px;color:var(--t3);margin-top:2px"></span></div>
+      <div class="fg"><label>New Equity ($)</label><input type="number" id="fc-eq" step="0.01"></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-gold" onclick="closeTrade()">Close Trade</button></div>
+  </div>
+</div>
+
+<!-- PRE-TRADE CHECKLIST -->
+<div id="panel-checklist" class="panel">
+  <div class="card">
+    <div class="ct">Pre-trade checklist — complete before every entry</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:12px">Tap each item: green = OK, red = not met. If any are red — do not enter.</div>
+    <div id="checklist-items">
+      <div class="checklist-item"><div class="chk" id="chk0" onclick="toggleChk(0)"></div><div><div class="clbl">No high-impact news in next 30 minutes</div><div class="csub">Check Calendar tab — any red events coming?</div></div></div>
+      <div class="checklist-item"><div class="chk" id="chk1" onclick="toggleChk(1)"></div><div><div class="clbl">I know today's market bias (bull / bear / range)</div><div class="csub">Check M15 — is price above or below 20 EMA?</div></div></div>
+      <div class="checklist-item"><div class="chk" id="chk2" onclick="toggleChk(2)"></div><div><div class="clbl">Price is at a key level (S/R, round number, swing)</div><div class="csub">Not entering in the middle of nowhere</div></div></div>
+      <div class="checklist-item"><div class="chk" id="chk3" onclick="toggleChk(3)"></div><div><div class="clbl">I see a signal candle (pin bar, engulfing, hammer)</div><div class="csub">Not just "it feels like it will reverse"</div></div></div>
+      <div class="checklist-item"><div class="chk" id="chk4" onclick="toggleChk(4)"></div><div><div class="clbl">I have NOT hit my $30 daily loss limit</div><div class="csub">If already down $30 today — stop trading</div></div></div>
+      <div class="checklist-item"><div class="chk" id="chk5" onclick="toggleChk(5)"></div><div><div class="clbl">I have NOT hit my $40 daily profit target</div><div class="csub">If already up $40 — close the platform</div></div></div>
+      <div class="checklist-item"><div class="chk" id="chk6" onclick="toggleChk(6)"></div><div><div class="clbl">This is NOT a revenge trade after a loss</div><div class="csub">Am I entering because setup is good, or to recover?</div></div></div>
+      <div class="checklist-item"><div class="chk" id="chk7" onclick="toggleChk(7)"></div><div><div class="clbl">My emotional state is calm, focused, or confident</div><div class="csub">Tired, greedy, revenge, FOMO = high risk of bad trade</div></div></div>
+      <div class="checklist-item"><div class="chk" id="chk8" onclick="toggleChk(8)"></div><div><div class="clbl">DXY direction supports my trade direction</div><div class="csub">DXY up = bad for BUY gold. DXY down = supports BUY gold.</div></div></div>
+      <div class="checklist-item"><div class="chk" id="chk9" onclick="toggleChk(9)"></div><div><div class="clbl">Spread is acceptable (under 40 pips on Vantage)</div><div class="csub">Check current spread on MT5 before entering</div></div></div>
+    </div>
+    <div id="chk-result" style="margin-top:12px;padding:10px 14px;border-radius:8px;background:var(--s3);font-size:13px;text-align:center;color:var(--t2)">0 / 10 checked</div>
+    <div class="btn-row"><button class="btn btn-out" onclick="resetChecklist()">Reset checklist</button></div>
+  </div>
+</div>
+
+<!-- MY TRADES -->
+<div id="panel-trades" class="panel">
+  <div class="sgrid" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr))">
+    <div class="scard"><div class="sl">Total trades</div><div class="sv" id="s-total">0</div></div>
+    <div class="scard"><div class="sl">Win rate</div><div class="sv green" id="s-wr">—</div></div>
+    <div class="scard"><div class="sl">Profit factor</div><div class="sv gold" id="s-pf">—</div></div>
+    <div class="scard"><div class="sl">Best trade</div><div class="sv green" id="s-best">—</div></div>
+    <div class="scard"><div class="sl">Worst trade</div><div class="sv red" id="s-worst">—</div></div>
+    <div class="scard"><div class="sl">Avg win</div><div class="sv green" id="s-aw">—</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:12px">
+    <div class="scard"><div class="sl">Contra-trend W%</div><div class="sv purple" id="s-contra">—</div></div>
+    <div class="scard"><div class="sl">Trend-follow W%</div><div class="sv green" id="s-trend">—</div></div>
+    <div class="scard"><div class="sl">Best session</div><div class="sv gold" id="s-session">—</div></div>
+  </div>
+  <!-- Emotion stats -->
+  <div class="card">
+    <div class="ct">Emotion vs performance</div>
+    <div id="emo-stats" style="font-size:12px;color:var(--t2);line-height:2"></div>
+  </div>
+  <div class="card">
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+      <select id="tf-status" onchange="renderTrades()" style="font-size:12px;padding:6px;width:130px">
+        <option value="ALL">All trades</option><option value="OPEN">Open</option><option value="CLOSED">Closed</option>
+      </select>
+      <select id="tf-dir" onchange="renderTrades()" style="font-size:12px;padding:6px;width:120px">
+        <option value="ALL">All directions</option><option value="BUY">BUY</option><option value="SELL">SELL</option>
+      </select>
+      <select id="tf-type" onchange="renderTrades()" style="font-size:12px;padding:6px;width:130px">
+        <option value="ALL">All types</option><option value="Contra">Contra-trend</option><option value="Trend">Trend</option>
+      </select>
+      <select id="tf-session" onchange="renderTrades()" style="font-size:12px;padding:6px;width:120px">
+        <option value="ALL">All sessions</option><option value="London">London</option><option value="NewYork">New York</option><option value="Asian">Asian</option>
+      </select>
+      <span style="margin-left:auto;font-size:11px;color:var(--t3)" id="tr-count"></span>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="ttbl">
+        <thead><tr><th>#</th><th>Date / Time</th><th>Holding</th><th>Dir</th><th>Size</th><th>Entry</th><th>Exit</th><th>Mood</th><th>P&L</th><th>News</th><th></th></tr></thead>
+        <tbody id="tr-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- EQUITY CHART -->
+<div id="panel-equity" class="panel">
+  <div class="card">
+    <div class="ct">Equity curve — all time</div>
+    <canvas id="eq-chart" height="200"></canvas>
+  </div>
+  <div class="card">
+    <div class="ct">Daily P&L bars</div>
+    <div id="eq-daily"></div>
+  </div>
+  <div class="card">
+    <div class="ct">Streak tracker</div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <div class="streak-badge">🔥 <span id="streak-cur">0</span> current</div>
+      <div class="streak-badge" style="background:var(--s3);border-color:var(--border2);color:var(--t2)">🏆 <span id="streak-best">0</span> best ever</div>
+    </div>
+    <div id="streak-list" style="margin-top:12px;font-size:12px;color:var(--t2);line-height:2"></div>
+  </div>
+</div>
+
+<!-- NEWS IMPACT LOG -->
+<div id="panel-news" class="panel">
+  <div class="card">
+    <div class="ct">Log a news event</div>
+    <div class="fgrid">
+      <div class="fg"><label>Date</label><input type="date" id="ni-date"></div>
+      <div class="fg"><label>Time WIB</label><input type="time" id="ni-time"></div>
+      <div class="fg"><label>Event type</label>
+        <select id="ni-type">
+          <option>NFP</option><option>CPI</option><option>PCE</option><option>FOMC</option>
+          <option>GDP</option><option>Jobless Claims</option><option>Fed Speaker</option>
+          <option>Trump Statement</option><option>Breaking News — War</option><option>Oil News</option><option>Other</option>
+        </select>
+      </div>
+      <div class="fg"><label>Actual vs Forecast</label><input type="text" id="ni-actual" placeholder="e.g. 3.8% vs 3.6% forecast (HOT)"></div>
+      <div class="fg"><label>Gold reaction</label>
+        <select id="ni-react">
+          <option>Gold ↑ Strong (+$20+)</option><option>Gold ↑ Mild (+$5–$20)</option>
+          <option>Neutral (±$5)</option><option>Gold ↓ Mild (-$5–$20)</option><option>Gold ↓ Strong (-$20+)</option>
+        </select>
+      </div>
+      <div class="fg"><label>DXY reaction</label>
+        <select id="ni-dxy">
+          <option>DXY ↑ Strong</option><option>DXY ↑ Mild</option><option>DXY Neutral</option>
+          <option>DXY ↓ Mild</option><option>DXY ↓ Strong</option>
+        </select>
+      </div>
+      <div class="fg full"><label>Notes — what happened and what I learned</label><textarea id="ni-notes" placeholder="e.g. PCE came in at 4.1% vs 3.9% forecast. Gold dropped $35 immediately then recovered $20 within 1 hour. Good contra-trend opportunity at the bottom."></textarea></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-gold" onclick="saveNewsEvent()">Save News Event</button></div>
+  </div>
+  <div class="card">
+    <div class="ct">News history — your personal reaction database</div>
+    <div id="ni-list"></div>
+  </div>
+</div>
+
+<!-- ANALYSIS -->
+<div id="panel-analysis" class="panel">
+  <div class="card">
+    <div class="ct">Save new analysis</div>
+    <div class="fgrid">
+      <div class="fg"><label>Date</label><input type="date" id="an-date"></div>
+      <div class="fg"><label>Type</label>
+        <select id="an-type">
+          <option>Daily</option><option>Weekly</option><option>Trade</option><option>News</option><option>Pattern</option>
+        </select>
+      </div>
+      <div class="fg full"><label>Title</label><input type="text" id="an-title" placeholder="e.g. Week 26 — PCE reaction analysis"></div>
+      <div class="fg full"><label>Paste Claude analysis here</label><textarea id="an-body" style="min-height:120px" placeholder="Paste the full analysis from Claude here."></textarea></div>
+      <div class="fg full"><label>My takeaways</label><textarea id="an-take" style="min-height:52px" placeholder="e.g. I trade better on quiet news days. My BUY win rate is higher."></textarea></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-gold" onclick="saveAnalysis()">Save</button><button class="btn btn-out" onclick="clearAnalysis()">Clear</button></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+    <select id="an-filter" onchange="renderAnalysis()" style="font-size:12px;padding:6px;width:150px">
+      <option value="ALL">All types</option><option value="Daily">Daily</option><option value="Weekly">Weekly</option><option value="Trade">Trade</option><option value="News">News</option><option value="Pattern">Pattern</option>
+    </select>
+    <input type="text" id="an-search" placeholder="Search..." oninput="renderAnalysis()" style="font-size:12px;padding:6px;width:150px">
+    <span style="margin-left:auto;font-size:11px;color:var(--t3)" id="an-count"></span>
+  </div>
+  <div id="an-list"></div>
+</div>
+
+<!-- WITHDRAWALS -->
+<div id="panel-withdrawals" class="panel">
+  <div class="sgrid" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="scard"><div class="sl">Total withdrawn</div><div class="sv gold" id="w-total">$0.00</div></div>
+    <div class="scard"><div class="sl">Cycles</div><div class="sv" id="w-cycles">0</div></div>
+    <div class="scard"><div class="sl">Effective return</div><div class="sv green" id="w-ret">0%</div><div class="ss">vs $300 base</div></div>
+  </div>
+  <div class="card">
+    <div class="ct">Log withdrawal</div>
+    <div class="fgrid">
+      <div class="fg"><label>Date</label><input type="date" id="w-date"></div>
+      <div class="fg"><label>Amount ($)</label><input type="number" id="w-amt" placeholder="e.g. 180" step="0.01"></div>
+      <div class="fg"><label>Equity before ($)</label><input type="number" id="w-before" step="0.01"></div>
+      <div class="fg"><label>Equity after ($)</label><input type="number" id="w-after" step="0.01" value="300"></div>
+      <div class="fg full"><label>Notes</label><input type="text" id="w-notes" placeholder="e.g. Withdrew $160 — equity was $460"></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-gold" onclick="saveWith()">Record Withdrawal</button></div>
+  </div>
+  <div class="card"><div class="ct">Withdrawal history</div><div id="w-list"></div></div>
+</div>
+
+<!-- MT5 IMPORT -->
+<div id="panel-import" class="panel">
+  <div class="card">
+    <div class="ct">Import MT5 / Vantage trade history</div>
+    <div class="upload-zone" onclick="document.getElementById('f-file').click()">
+      <div style="font-size:28px;margin-bottom:8px;opacity:.4">📂</div>
+      <div style="font-size:13px;color:var(--t2)">Click to upload or drag & drop</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:4px">MT5 HTML report, CSV, or Vantage CSV export</div>
+    </div>
+    <input type="file" id="f-file" accept=".html,.htm,.csv,.txt" onchange="handleFile(event)" style="display:none">
+    <div id="imp-status" style="display:none;margin-top:10px;font-size:12px"></div>
+    <div id="imp-preview" style="display:none;margin-top:10px">
+      <div style="overflow-x:auto"><table class="ttbl" id="imp-tbl"></table></div>
+      <div class="btn-row">
+        <button class="btn btn-gold" onclick="doImport()">Import all</button>
+        <button class="btn btn-out" onclick="clearImport()">Clear</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">How to export from MT5</div>
+    <div style="font-size:12px;color:var(--t2);line-height:2">
+      MT5: View → Terminal (Ctrl+T) → History tab → Right-click → Save as Report → HTML<br>
+      Vantage app: Account → Trade History → Export → CSV
+    </div>
+  </div>
+</div>
+
+<!-- SETUP -->
+<div id="panel-setup" class="panel">
+  <div class="card" style="border:2px solid var(--green)">
+    <div class="ct" style="color:var(--green)">☁️ Supabase — permanent cloud database (recommended)</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:10px;line-height:1.7">
+      Saves all your trades permanently to the cloud. Works across phone + desktop. Data survives app updates, cache clears, everything.<br>
+      <span style="color:var(--t3)">Free forever at supabase.com. Setup takes 5 minutes.</span>
+    </div>
+    <div class="fgrid">
+      <div class="fg full"><label>Supabase Project URL</label><input type="text" id="sb-url" placeholder="https://xxxx.supabase.co" oninput="saveSB()"></div>
+      <div class="fg full"><label>Supabase Anon Key</label><input type="password" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." oninput="saveSB()"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+      <button class="btn btn-gold" onclick="testSB()">Test connection</button>
+      <button class="btn btn-out btn-sm" onclick="syncToCloud()">↑ Backup to cloud</button>
+      <button class="btn btn-out btn-sm" onclick="loadFromCloud()">↓ Restore from cloud</button>
+      <button class="btn btn-out btn-sm" onclick="debugSB()">🔍 Debug</button>
+    </div>
+    <div style="font-size:11px;margin-top:8px" id="sb-status"></div>
+    <div id="sb-debug" style="display:none;margin-top:8px;background:var(--s3);border-radius:6px;padding:10px;font-family:var(--mono);font-size:10px;color:var(--text);white-space:pre-wrap;overflow-x:auto;max-height:300px;overflow-y:auto"></div>
+    <div style="margin-top:10px;background:var(--s3);border-radius:6px;padding:10px 12px;font-size:11px;color:var(--t3);line-height:1.8">
+      <strong style="color:var(--text)">How it works once connected:</strong><br>
+      ✓ Every trade you log → auto-saves to cloud instantly<br>
+      ✓ Every time app opens → auto-loads latest data from cloud<br>
+      ✓ Real-time sync → changes on phone appear on laptop in seconds<br>
+      ✓ App update or cache clear → data always safe in cloud<br><br>
+      <strong style="color:var(--text)">Backup / Restore buttons:</strong><br>
+      ↑ Backup = force-upload all local data to cloud (use after first setup)<br>
+      ↓ Restore = force-download cloud data (use on a new device)
+    </div>
+  </div>
+
+  <div class="card gold-border">
+    <div class="ct" style="color:var(--gold)">Anthropic API key — Ask Claude feature</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:8px">Get free key at console.anthropic.com → API Keys. Cost ~$0.001 per analysis.</div>
+    <div class="fg" style="margin-bottom:8px"><label>API Key</label><input type="password" id="api-key" placeholder="sk-ant-..." oninput="saveKey()"></div>
+    <div style="font-size:11px;color:var(--t3)" id="key-status"></div>
+  </div>
+  <div class="card">
+    <div class="ct" style="color:var(--blue)">FinnHub API key — live economic calendar</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:8px">Get your free key at <strong>finnhub.io</strong> → Dashboard → API Key. Gives you the real full economic calendar including Fed speakers, JOLTS, ADP — everything.</div>
+    <div class="fg" style="margin-bottom:8px"><label>FinnHub API Key</label><input type="text" id="fh-key" placeholder="d1abc2def3gh..." oninput="saveFH()"></div>
+    <div style="display:flex;gap:8px;margin-bottom:10px"><button class="btn btn-out btn-sm" onclick="testFH()">Test connection</button><span id="fh-status" style="font-size:11px;color:var(--t3);align-self:center"></span></div>
+    <div style="background:var(--s3);border-radius:6px;padding:10px 12px;font-size:12px;color:var(--t2);line-height:1.7">
+      <strong style="color:var(--text)">If test fails (proxy blocked):</strong> Deploy the free backend server from the zip package → paste your Render.com URL below → all CORS issues disappear permanently and you get 24/7 Telegram alerts even when app is closed.
+    </div>
+    <div class="fg" style="margin-top:10px"><label>Backend server URL (optional — from Render.com)</label><input type="text" id="backend-url" placeholder="https://xau-tracker-xxx.onrender.com" oninput="saveBackendUrl()"></div>
+    <div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-out btn-sm" onclick="testBackend()">Test backend</button><span id="backend-status" style="font-size:11px;color:var(--t3);align-self:center"></span></div>
+  </div>
+
+  <div class="card">
+    <div class="ct">Telegram alerts</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:10px">30-min warning before high-impact news sent to your Telegram.</div>
+    <div class="fgrid">
+      <div class="fg"><label>Bot Token</label><input type="text" id="tg-tok" placeholder="7123456789:ABC..." oninput="saveTg()"></div>
+      <div class="fg"><label>Chat ID</label><input type="number" id="tg-cid" placeholder="123456789" oninput="saveTg()"></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-gold" onclick="testTg()">Test Alert</button><span id="tg-status" style="font-size:12px;color:var(--t3)"></span></div>
+  </div>
+  <div class="card">
+    <div class="ct">Push notifications</div>
+    <button class="btn btn-out" id="push-btn" onclick="setupNotif()">Enable push notifications</button>
+    <div style="font-size:11px;color:var(--t3);margin-top:6px" id="push-status"></div>
+  </div>
+  <div class="card">
+    <div class="ct">Data backup</div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="exportCSV()">📊 Export to Excel / Google Sheets</button>
+    </div>
+    <div style="font-size:11px;color:var(--t3);margin-top:6px;line-height:1.6">
+      Downloads a CSV file → open in Excel or drag into Google Sheets. Contains all trades, daily summary, withdrawals and stats.
+    </div>
+    <div class="btn-row" style="margin-top:10px">
+      <button class="btn btn-out" onclick="exportData()">Export JSON backup</button>
+      <button class="btn btn-out" onclick="document.getElementById('imp-json').click()">Import JSON</button>
+      <button class="btn btn-red" onclick="resetAll()">Reset all</button>
+    </div>
+    <input type="file" id="imp-json" accept=".json" onchange="importData(event)" style="display:none">
+  </div>
+</div>
+
+
+<!-- PHOTO IMPORT -->
+<div id="panel-photo" class="panel">
+  <div class="card">
+    <div class="ct" style="color:var(--gold)">MT5 photo import — 2-step process</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:12px;line-height:1.7">
+      Upload screenshots in 2 separate steps for best accuracy and holding times.
+    </div>
+
+    <!-- Step 1 -->
+    <div style="background:var(--s3);border-radius:8px;padding:12px;margin-bottom:10px;border-left:3px solid var(--gold)">
+      <div style="font-size:12px;font-weight:500;color:var(--gold);margin-bottom:8px">Step 1 — Positions tab (entry→exit prices + P&L)</div>
+      <div style="font-size:11px;color:var(--t3);margin-bottom:8px">Upload 1-4 Positions screenshots. Gets all trades with P&L.</div>
+      <div class="upload-zone" id="pos-zone" onclick="document.getElementById('pos-input').click()" style="padding:16px">
+        <div style="font-size:20px;margin-bottom:4px">📋</div>
+        <div style="font-size:12px;color:var(--t2)">Upload Positions tab screenshots</div>
+      </div>
+      <input type="file" id="pos-input" accept="image/*" multiple onchange="handlePosFiles(event)" style="display:none">
+      <div id="pos-preview" style="display:none;margin-top:8px;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px"></div>
+      <button class="btn btn-gold" id="pos-parse-btn" onclick="parsePositions()" style="display:none;margin-top:8px;width:100%">⚡ Extract trades from Positions</button>
+      <div id="pos-status" style="font-size:11px;color:var(--t3);margin-top:6px"></div>
+    </div>
+
+    <!-- Step 2 -->
+    <div style="background:var(--s3);border-radius:8px;padding:12px;margin-bottom:10px;border-left:3px solid var(--blue)" id="step2-card">
+      <div style="font-size:12px;font-weight:500;color:var(--blue);margin-bottom:8px">Step 2 — Deals tab (entry times for holding calculation) <span style="color:var(--t3);font-weight:400">optional</span></div>
+      <div style="font-size:11px;color:var(--t3);margin-bottom:8px">Upload Deals screenshots to get holding times. Skip if not needed.</div>
+      <div class="upload-zone" id="deal-zone" onclick="document.getElementById('deal-input').click()" style="padding:16px">
+        <div style="font-size:20px;margin-bottom:4px">⏱️</div>
+        <div style="font-size:12px;color:var(--t2)">Upload Deals tab screenshots</div>
+      </div>
+      <input type="file" id="deal-input" accept="image/*" multiple onchange="handleDealFiles(event)" style="display:none">
+      <div id="deal-preview" style="display:none;margin-top:8px;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px"></div>
+      <button class="btn btn-out btn-sm" id="deal-parse-btn" onclick="parseDeals()" style="display:none;margin-top:8px">⚡ Extract holding times from Deals</button>
+      <div id="deal-status" style="font-size:11px;color:var(--t3);margin-top:6px"></div>
+    </div>
+
+    <!-- Results -->
+    <div id="photo-error" style="display:none;background:var(--rbg);border:1px solid #3a1010;border-radius:8px;padding:12px;margin-bottom:10px;font-size:12px;color:#fca5a5"></div>
+
+    <div id="photo-results" style="display:none">
+      <div class="card" style="margin-bottom:10px">
+        <div class="ct" style="color:var(--gold)">Extracted trades</div>
+        <div class="sgrid" id="photo-summary-grid"></div>
+      </div>
+      <div class="card" style="margin-bottom:10px">
+        <div id="photo-trade-list"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <button class="btn btn-gold" onclick="importPhotoTrades()">Import to Trade Log</button>
+        <button class="btn btn-out" onclick="exportPhotoCSV()">Export CSV</button>
+        <button class="btn btn-out" onclick="resetPhotoImport()">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ct">Tips for best results</div>
+    <div style="font-size:12px;color:var(--t2);line-height:1.9">
+      ✅ <strong style="color:var(--text)">Positions tab</strong> — upload up to 4 screenshots, processed 1 at a time<br>
+      ✅ <strong style="color:var(--text)">Deals tab</strong> — upload up to 4 screenshots for holding times<br>
+      ✅ <strong style="color:var(--text)">Both automatically merged</strong> — holding times calculated from entry/exit times<br>
+      ✅ <strong style="color:var(--text)">All times converted</strong> — MT5 UTC+3 → WIB automatically<br>
+      ⚠️ <strong style="color:var(--text)">Max 2 photos per batch</strong> — app processes automatically
+    </div>
+  </div>
+</div>
+
+
+</div><!-- /panels -->
+<div class="toast" id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+const DB={
+  get:(k,d)=>{
+    try{
+      const v=localStorage.getItem(k);
+      if(v===null||v===undefined)return d;
+      return JSON.parse(v);
+    }catch(e){
+      try{return sessionStorage.getItem(k)?JSON.parse(sessionStorage.getItem(k)):d;}catch{return d;}
+    }
+  },
+  set:(k,v)=>{
+    const str=JSON.stringify(v);
+    try{localStorage.setItem(k,str);}catch(e){
+      try{sessionStorage.setItem(k,str);}catch{}
+    }
+    // Also store in memory as last resort
+    DB._mem=DB._mem||{};
+    DB._mem[k]=v;
+  },
+  _mem:{}
+};
+let trades=DB.get('xau_trades',[]);
+let withdrawals=DB.get('xau_withdrawals',[]);
+let analyses=DB.get('xau_analyses',[]);
+let newsEvents=DB.get('xau_news_events',[]);
+let equity=DB.get('xau_equity',300);
+let selEmotion='';
+let chkStates=Array(10).fill(0);
+let parsedImp=[];
+let eqChart=null;
+const BASE=300;
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function toast(m,e=false){const t=document.getElementById('toast');t.textContent=m;t.className='toast'+(e?' err':'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+
+// ── Tab switch ─────────────────────────────────────────────────────────────
+function sw(id,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  el.classList.add('active');
+  if(id==='dashboard')renderDash();
+  if(id==='calendar')renderCal();
+  if(id==='trades'){renderTrades();renderTradeStats();}
+  if(id==='equity')renderEquityChart();
+  if(id==='news')renderNewsLog();
+  if(id==='analysis')renderAnalysis();
+  if(id==='withdrawals')renderWith();
+  if(id==='log'){setFormDef();renderOpenSel();checkNewsWarn();loadSR();}
+  if(id==='checklist')updateChkResult();
+}
+
+// ── WIB Date ───────────────────────────────────────────────────────────────
+function wibNow(){const n=new Date();const w=new Date(n.getTime()+7*3600000);return{now:n,wib:w,today:w.toISOString().slice(0,10),day:w.getDay()};}
+function nextWeekday(t){const{wib}=wibNow();let d=t-wib.getDay();if(d<0)d+=7;const r=new Date(wib.getTime()+d*86400000);return r.toISOString().slice(0,10);}
+
+// ── Calendar ───────────────────────────────────────────────────────────────
+// ── FinnHub Live Calendar ─────────────────────────────────────────────────
+function saveFH(){DB.set('fh_key',document.getElementById('fh-key').value.trim());}
+function getBackendUrl(){return(DB.get('backend_url','')||'https://xau-tracker-backend.onrender.com').replace(/\/+$/,'');}
+function saveBackendUrl(){DB.set('backend_url',document.getElementById('backend-url').value.trim());}
+async function testBackend(){
+  const url=getBackendUrl();const st=document.getElementById('backend-status');
+  if(!url){st.textContent='Enter your Render.com URL first';return;}
+  st.textContent='Testing...';st.style.color='var(--t3)';
+  try{
+    const r=await fetch(url+'/health',{signal:AbortSignal.timeout(10000)});
+    const d=await r.json();
+    if(d.ok){
+      st.textContent='✓ Backend live — FH:'+( d.fh_key?'✓':'✗')+' TG:'+(d.tg_token?'✓':'✗')+' Up:'+d.uptime;
+      st.style.color='var(--green)';
+      pushConfigToBackend();
+    }else{st.textContent='Backend responded oddly';st.style.color='var(--gold)';}
+  }catch(e){st.textContent='Cannot reach: '+e.message;st.style.color='var(--red)';}
+}
+async function pushConfigToBackend(){
+  const url=getBackendUrl();if(!url)return;
+  const cfg={fh_key:DB.get('fh_key',''),tg_token:DB.get('tg_token',''),tg_chat:DB.get('tg_chatid','')};
+  try{await fetch(url+'/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg),signal:AbortSignal.timeout(8000)});}catch(e){console.warn('Config push failed:',e.message);}
+}
+async function fhFetch(path){
+  // Priority 1: backend server (no CORS, 24/7 reliable)
+  const backendUrl=getBackendUrl();
+  if(backendUrl){
+    try{
+      const r=await fetch(backendUrl+'/calendar?from='+wibNow().today,{signal:AbortSignal.timeout(10000)});
+      if(r.ok){const d=await r.json();if(d.economicCalendar!==undefined)return d;}
+    }catch(e){console.warn('Backend failed:',e.message);}
+  }
+  // Priority 2: CORS proxies
+  const key=DB.get('fh_key','');
+  if(!key)return null;
+  const target=`https://finnhub.io/api/v1/${path}&token=${key}`;
+  const proxies=[
+    u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u=>`https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+    u=>`https://thingproxy.freeboard.io/fetch/${u}`,
+  ];
+  for(const makeProxy of proxies){
+    try{
+      const r=await fetch(makeProxy(target),{signal:AbortSignal.timeout(8000)});
+      if(!r.ok)continue;
+      const text=await r.text();
+      let json;
+      try{const w=JSON.parse(text);json=w.contents?JSON.parse(w.contents):w;}catch{continue;}
+      if(json&&(json.economicCalendar!==undefined||json.error))return json;
+    }catch(e){continue;}
+  }
+  // Priority 3: direct (desktop)
+  try{const r=await fetch(target);if(r.ok)return await r.json();}catch{}
+  return null;
+}
+async function testFH(){
+  const key=DB.get('fh_key','');
+  if(!key){document.getElementById('fh-status').textContent='Enter key first';return;}
+  const st=document.getElementById('fh-status');
+  st.textContent='Testing connection...';st.style.color='var(--t3)';
+  const today=new Date().toISOString().slice(0,10);
+  try{
+    const d=await fhFetch(`calendar/economic?from=${today}`);
+    if(!d){st.textContent='All proxies failed — key saved, calendar uses smart fallback instead';st.style.color='var(--gold)';return;}
+    if(d.error){st.textContent='API error: '+d.error;st.style.color='var(--red)';return;}
+    if(d.economicCalendar!==undefined){st.textContent='✓ Connected — '+d.economicCalendar.length+' events found';st.style.color='var(--green)';}
+    else{st.textContent='Connected but unexpected response — key saved';st.style.color='var(--gold)';}
+  }catch(e){st.textContent='Error: '+e.message;st.style.color='var(--red)';}
+}
+
+async function fetchFinnHubCal(){
+  const key=DB.get('fh_key','');
+  if(!key)return null;
+  try{
+    const{today,wib}=wibNow();
+    const toDate=new Date(wib.getTime()+14*86400000).toISOString().slice(0,10);
+    const d=await fhFetch(`calendar/economic?from=${today}&to=${toDate}`);
+    if(!d)return null;
+    const events=d.economicCalendar||[];
+    // Filter high and medium impact, convert to our format
+    // FinnHub impact: high=3, medium=2, low=1
+    const impactMap={3:'HIGH',2:'MED',1:'LOW'};
+    // Keywords that affect XAUUSD
+    const xauKeywords=['fed','fomc','gdp','cpi','pce','inflation','employment','jobs','nfp','payroll','rate','jolts','ism','pmi','retail','consumer','treasury','powell','williams','waller','jefferson','cook','barr','daly','kashkari','bostic','crude','oil','iran','ukraine'];
+    return events
+      .filter(e=>{
+        const impact=impactMap[e.impact]||'LOW';
+        if(impact==='LOW')return false;
+        const name=(e.event||'').toLowerCase();
+        return xauKeywords.some(k=>name.includes(k))||impact==='HIGH';
+      })
+      .map(e=>{
+        // Convert UTC time to WIB (UTC+7)
+        const utcTime=e.time||'00:00';
+        const[h,m]=(utcTime+':00').split(':').map(Number);
+        const wibH=(h+7)%24;
+        const wibTime=String(wibH).padStart(2,'0')+':'+String(m).padStart(2,'0');
+        return{
+          date:e.date||today,
+          time:wibTime,
+          event:e.event||'Economic Event',
+          impact:impactMap[e.impact]||'LOW',
+          forecast:e.estimate!=null?String(e.estimate):'—',
+          actual:e.actual!=null?String(e.actual):null,
+          note:'FinnHub live data',
+          currency:e.country||'US'
+        };
+      })
+      .sort((a,b)=>a.date+a.time>b.date+b.time?1:-1);
+  }catch{return null;}
+}
+
+let liveCal=null;
+async function loadLiveCal(){
+  liveCal=await fetchFinnHubCal();
+  renderCal();
+}
+
+function getCal(){
+  const{today}=wibNow();
+  const thu=nextWeekday(4),wed=nextWeekday(3);
+  return [
+    {date:thu,time:'20:30',event:'Initial Jobless Claims',impact:'HIGH',forecast:'~225K',note:'Every Thursday'},
+    {date:wed,time:'21:30',event:'EIA Crude Oil Inventories',impact:'MED',forecast:'—',note:'Every Wednesday'},
+    {date:'2026-07-02',time:'20:30',event:'NFP (July)',impact:'HIGH',forecast:'—',note:'First Friday of July — biggest mover'},
+    {date:'2026-07-15',time:'20:30',event:'CPI Inflation (June)',impact:'HIGH',forecast:'~3.8%',note:'Direct inflation read'},
+    {date:'2026-07-28',time:'01:00',event:'FOMC Rate Decision',impact:'HIGH',forecast:'Hold/Hike',note:'Jul 28-29 — rate decision'},
+    {date:'2026-07-30',time:'20:30',event:'PCE Price Index (June)',impact:'HIGH',forecast:'—',note:'Fed preferred gauge'},
+  ].filter(e=>e.date>=today).sort((a,b)=>a.date+a.time>b.date+b.time?1:-1);
+}
+
+function renderCal(filter='ALL'){
+  const{now,today}=wibNow();
+  // Merge live FinnHub events with hardcoded fallback
+  let evts = liveCal && liveCal.length ? liveCal : getCal();
+  // Always add hardcoded fixed dates not in live feed
+  if(liveCal&&liveCal.length){
+    const fixed=getCal().filter(e=>e.date>'2026-06-30');
+    fixed.forEach(fe=>{if(!evts.find(e=>e.date===fe.date&&e.event===fe.event))evts.push(fe);});
+    evts.sort((a,b)=>a.date+a.time>b.date+b.time?1:-1);
+  }
+  if(filter==='HIGH')evts=evts.filter(e=>e.impact==='HIGH');
+  if(filter==='TODAY')evts=evts.filter(e=>e.date===today);
+  document.getElementById('cal-upd').textContent='Updated: '+new Date().toLocaleTimeString('id-ID');
+  const el=document.getElementById('cal-list');
+  el.innerHTML=evts.map(e=>{
+    const et=new Date(e.date+'T'+e.time+':00');
+    const diff=Math.round((et-now)/60000);
+    const soon=diff>0&&diff<=30;
+    const ic=e.impact==='HIGH'?'hi':e.impact==='MED'?'med':'lo';
+    const cd=diff<0?'<span class="cd">Done</span>':diff<60?`<span class="cd ${soon?'soon':''}">${diff}m</span>`:`<span class="cd">${Math.floor(diff/60)}h${diff%60}m</span>`;
+    const actualStr=e.actual!=null?` <span style="color:${parseFloat(e.actual)>parseFloat(e.forecast)?'var(--red)':'var(--green)'}">Actual: ${e.actual}</span>`:'';
+    return `<div class="cal-row ${ic} ${soon?'imm':''}">
+      <span style="font-family:var(--mono);font-size:11px;color:var(--t2)">${e.time} WIB</span>
+      <div style="display:flex;align-items:center;gap:5px"><span class="idot ${ic}"></span><span style="font-size:10px;color:${e.impact==='HIGH'?'var(--red)':e.impact==='MED'?'var(--gold)':'var(--t3)'}">${e.impact}</span></div>
+      <div><div style="font-size:12px;color:var(--text);font-weight:500">${e.event}</div><div style="font-size:10px;color:var(--t3)">${e.note} ${e.forecast&&e.forecast!=='—'?'· Forecast: '+e.forecast:''}</div>${actualStr}</div>
+      ${cd}
+    </div>`;
+  }).join('');
+  const fx=document.getElementById('cal-fixed');
+  if(fx)fx.innerHTML=[
+    {l:'FOMC Meeting',d:'Jul 28–29, 2026',n:'Rate decision — biggest gold mover'},
+    {l:'NFP',d:'First Friday monthly',n:'Every month 20:30 WIB'},
+    {l:'Fed Chair speeches',d:'Anytime',n:'Kevin Warsh comments move gold instantly'},
+    {l:'US-Iran headlines',d:'Breaking news',n:'Any escalation/deal = immediate gold move'},
+    {l:'Trump statements',d:'Anytime',n:'Tariff/Fed pressure comments move DXY'},
+  ].map(e=>`<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px">
+    <div style="width:150px;font-weight:500;color:var(--text);flex-shrink:0">${e.l}</div>
+    <div style="color:var(--gold);font-family:var(--mono);width:150px;flex-shrink:0">${e.d}</div>
+    <div style="color:var(--t2)">${e.n}</div>
+  </div>`).join('');
+}
+function fCal(f){renderCal(f);}
+
+// ── S/R Levels (calculated from current price) ─────────────────────────────
+async function loadSR(){
+  const srCard=document.getElementById('sr-card');
+  const srLoad=document.getElementById('sr-loading');
+  const srContent=document.getElementById('sr-content');
+  srLoad.style.display='block';srContent.style.display='none';
+  let price=4063;
+  try{
+    const r=await fetch('https://api.metals.live/v1/spot/gold');
+    if(r.ok){const d=await r.json();price=d.price||d[0]?.price||price;}
+  }catch(e){}
+  // Calculate key S/R based on round numbers, recent swing levels, and price structure
+  const p=Math.round(price);
+  const round50=Math.floor(p/50)*50;
+  const round100=Math.floor(p/100)*100;
+  const supports=[
+    {price:round50,label:'Round $'+round50+' — psychological',strength:'strong'},
+    {price:round50-50,label:'$'+(round50-50)+' — next round level',strength:'medium'},
+    {price:round100,label:'$'+round100+' — century level',strength:'strong'},
+    {price:round50-100,label:'$'+(round50-100)+' — swing low zone',strength:'medium'},
+  ].filter(s=>s.price<p).sort((a,b)=>b.price-a.price).slice(0,4);
+  const resistances=[
+    {price:round50+50,label:'$'+(round50+50)+' — next round level',strength:'medium'},
+    {price:round100+100,label:'$'+(round100+100)+' — century level',strength:'strong'},
+    {price:round50+100,label:'$'+(round50+100)+' — swing high zone',strength:'medium'},
+    {price:round100+50,label:'$'+(round100+50)+' — mid-century level',strength:'medium'},
+  ].filter(r=>r.price>p).sort((a,b)=>a.price-b.price).slice(0,4);
+  document.getElementById('sr-price-ref').textContent=`Current XAUUSD: $${p.toLocaleString()} | Levels based on 1H structure + round numbers`;
+  document.getElementById('sr-resist').innerHTML=resistances.map(r=>`
+    <div class="sr-zone" style="border-left:3px solid var(--red)">
+      <div><div class="sr-price" style="color:var(--red)">$${r.price.toLocaleString()}</div><div style="font-size:10px;color:var(--t3);margin-top:2px">${r.label}</div></div>
+      <span style="font-size:10px;padding:2px 7px;border-radius:999px;background:var(--rbg);color:var(--red)">${r.strength}</span>
+    </div>`).join('');
+  document.getElementById('sr-support').innerHTML=supports.map(s=>`
+    <div class="sr-zone" style="border-left:3px solid var(--green)">
+      <div><div class="sr-price" style="color:var(--green)">$${s.price.toLocaleString()}</div><div style="font-size:10px;color:var(--t3);margin-top:2px">${s.label}</div></div>
+      <span style="font-size:10px;padding:2px 7px;border-radius:999px;background:var(--gbg);color:var(--green)">${s.strength}</span>
+    </div>`).join('');
+  document.getElementById('sr-updated').textContent='Updated: '+new Date().toLocaleTimeString('id-ID')+' | Tip: cross-check with your MT5 chart for swing highs/lows';
+  srLoad.style.display='none';srContent.style.display='block';
+  // Update header price
+  document.getElementById('hdr-xau').textContent='$'+p.toLocaleString();
+}
+
+// ── News warning ───────────────────────────────────────────────────────────
+function checkNewsWarn(){
+  const{now}=wibNow();
+  const calSrc=liveCal&&liveCal.length?liveCal:getCal();
+  const warn=calSrc.filter(e=>{const et=new Date(e.date+'T'+e.time+':00');const d=(et-now)/60000;return d>0&&d<=60&&e.impact==='HIGH';});
+  const el=document.getElementById('log-news-warn');
+  if(warn.length){
+    el.style.display='block';
+    el.innerHTML='⚠️ <strong>HIGH IMPACT NEWS INCOMING:</strong> '+warn.map(e=>`${e.event} at ${e.time} WIB`).join(' | ')+'<br><span style="opacity:.8">Be careful entering a trade in this window.</span>';
+    document.getElementById('f-news').value=warn.map(e=>e.event).join(', ')+' — pending';
+  }else{
+    el.style.display='none';
+    document.getElementById('f-news').value='No major news in next 60 min';
+  }
+}
+
+// ── Emotion selector ───────────────────────────────────────────────────────
+function selEmo(e,el){
+  selEmotion=e;
+  document.querySelectorAll('.emo-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// ── Auto-calc P&L ──────────────────────────────────────────────────────────
+function autoCalc(){
+  const entry=parseFloat(document.getElementById('f-entry').value);
+  const exit=parseFloat(document.getElementById('f-exit')?.value);
+  const lot=parseFloat(document.getElementById('f-lot').value)||0.03;
+  const dir=document.getElementById('f-dir').value;
+  if(!isNaN(entry)&&!isNaN(exit)&&exit>0){
+    const pips=dir==='BUY'?(exit-entry):(entry-exit);
+    const pnl=parseFloat((pips*lot*100).toFixed(2));
+    document.getElementById('f-pnl').value=pnl;
+    document.getElementById('f-pnl-hint').textContent=`${pips.toFixed(2)} pips × ${lot} × 100 = $${pnl} (edit if broker differs)`;
+    const eqO=parseFloat(document.getElementById('f-eq-open').value)||equity;
+    const eqC=document.getElementById('f-eq-close');
+    if(eqC)eqC.value=(eqO+pnl).toFixed(2);
+  }
+}
+
+function toggleExit(){
+  const cl=document.getElementById('f-status').value==='CLOSED';
+  ['fg-exit','fg-pnl','fg-eqc'].forEach(id=>document.getElementById(id).style.display=cl?'block':'none');
+}
+
+// ── Form defaults ──────────────────────────────────────────────────────────
+function mt5ToWIB(dateStr, timeStr){
+  // Convert MT5 server time (UTC+3) to WIB (UTC+7) by adding 4 hours
+  if(!dateStr || !timeStr) return {date:dateStr, time:timeStr};
+  const [h,m,s] = (timeStr+':00').split(':').map(Number);
+  const dt = new Date(dateStr + 'T' + String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':00');
+  dt.setHours(dt.getHours() + 4); // UTC+3 to UTC+7
+  const wibDate = dt.toISOString().slice(0,10);
+  const wibTime = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+  return {date: wibDate, time: wibTime};
+}
+
+function setFormDef(){
+  const{wib}=wibNow();
+  document.getElementById('f-date').value=wib.toISOString().slice(0,10);
+  document.getElementById('f-time').value=wib.toTimeString().slice(0,5);
+  document.getElementById('f-eq-open').value=equity.toFixed(2);
+  // Auto-detect session
+  const h=wib.getHours();
+  const sel=document.getElementById('f-session');
+  if(h>=14&&h<18)sel.value='London';
+  else if(h>=19&&h<23)sel.value='NewYork';
+  else if(h>=0&&h<7)sel.value='Asian';
+  else sel.value='Other';
+}
+
+function renderOpenSel(){
+  const opens=trades.filter(t=>t.status==='OPEN');
+  const card=document.getElementById('close-card');
+  if(!opens.length){card.style.display='none';return;}
+  card.style.display='block';
+  document.getElementById('fc-id').innerHTML=opens.map(t=>`<option value="${t.id}">${t.date} ${t.dir} @ ${t.entry}</option>`).join('');
+}
+
+function calcClose(){
+  const id=parseInt(document.getElementById('fc-id').value);
+  const tr=trades.find(t=>t.id===id);
+  const exit=parseFloat(document.getElementById('fc-exit').value);
+  if(tr&&!isNaN(exit)){
+    const pips=tr.dir==='BUY'?(exit-tr.entry):(tr.entry-exit);
+    const pnl=parseFloat((pips*(tr.lot||0.03)*100).toFixed(2));
+    document.getElementById('fc-pnl').value=pnl;
+    document.getElementById('fc-hint').textContent=`${pips.toFixed(2)} pips × ${tr.lot||0.03} × 100 = $${pnl}`;
+    document.getElementById('fc-eq').value=(equity+pnl).toFixed(2);
+  }
+}
+
+// ── Save trade ─────────────────────────────────────────────────────────────
+function saveTrade(){
+  const date=document.getElementById('f-date').value;
+  const time=document.getElementById('f-time').value;
+  const dir=document.getElementById('f-dir').value;
+  const type=document.getElementById('f-type').value;
+  const session=document.getElementById('f-session').value;
+  const lot=parseFloat(document.getElementById('f-lot').value);
+  const entry=parseFloat(document.getElementById('f-entry').value);
+  const eqOpen=parseFloat(document.getElementById('f-eq-open').value)||equity;
+  const status=document.getElementById('f-status').value;
+  const notes=document.getElementById('f-notes').value.trim();
+  const news=document.getElementById('f-news').value.trim();
+  const emotion=selEmotion;
+  if(!date||isNaN(entry)||isNaN(lot)){toast('Fill date, entry price and lot size',true);return;}
+  let pnl=null,exit=null,eqClose=null;
+  if(status==='CLOSED'){
+    exit=parseFloat(document.getElementById('f-exit').value)||null;
+    pnl=parseFloat(document.getElementById('f-pnl').value)||null;
+    eqClose=parseFloat(document.getElementById('f-eq-close').value)||null;
+    if(pnl!=null){equity=eqClose!=null?eqClose:equity+pnl;DB.set('xau_equity',equity);}
+  }
+  const{wib:nowWib}=wibNow();
+  const closeTime=status==='CLOSED'?nowWib.toTimeString().slice(0,5):null;
+  const trade={id:Date.now(),date,time,dir,type,session,lot,entry,eqOpen,status,exit,pnl,eqClose,notes,news,emotion,closeTime};
+  trades.unshift(trade);
+  DB.set('xau_trades',trades);
+  updateHdr();checkDDAlert();checkNewsAlert(trade);
+  toast('Trade saved ✓');clearForm();renderOpenSel();
+  sbSaveTrade(trade);autoSync();
+}
+
+function clearForm(){
+  setFormDef();
+  ['f-entry','f-exit','f-pnl','f-eq-close','f-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-lot').value='0.03';
+  document.getElementById('f-status').value='OPEN';
+  toggleExit();selEmotion='';
+  document.querySelectorAll('.emo-btn').forEach(b=>b.classList.remove('selected'));
+  checkNewsWarn();
+}
+
+// ── Close trade ────────────────────────────────────────────────────────────
+function closeTrade(){
+  const id=parseInt(document.getElementById('fc-id').value);
+  const exit=parseFloat(document.getElementById('fc-exit').value)||null;
+  const pnl=parseFloat(document.getElementById('fc-pnl').value)||null;
+  const newEq=parseFloat(document.getElementById('fc-eq').value)||null;
+  const tr=trades.find(t=>t.id===id);
+  if(!tr)return;
+  tr.status='CLOSED';tr.exit=exit;tr.pnl=pnl;tr.closeTime=wibNow().wib.toTimeString().slice(0,5);
+  if(tr.date&&tr.time&&!tr.holdingTime){
+    const entryDt=new Date(tr.date+'T'+tr.time+':00');
+    const diffMs=new Date()-entryDt;
+    if(diffMs>0){const h=Math.floor(diffMs/3600000);const m=Math.floor((diffMs%3600000)/60000);tr.holdingTime=(h>0?h+'h ':'')+m+'m';}
+  }
+  if(newEq!=null)equity=newEq;else if(pnl!=null)equity+=pnl;
+  tr.eqClose=equity;
+  DB.set('xau_trades',trades);DB.set('xau_equity',equity);
+  updateHdr();checkDDAlert();toast('Trade closed ✓');renderOpenSel();
+  sbSaveTrade(trades.find(t=>t.id===id)||{id});autoSync();
+}
+
+function deleteTrade(id){
+  if(!confirm('Delete this trade?'))return;
+  const tr=trades.find(t=>t.id===id);
+  if(tr&&tr.pnl!=null)equity=Math.max(BASE,equity-tr.pnl);
+  trades=trades.filter(t=>t.id!==id);
+  DB.set('xau_trades',trades);DB.set('xau_equity',equity);
+  updateHdr();renderTrades();renderTradeStats();toast('Deleted');
+  sbDeleteTrade(id);autoSync();
+}
+
+function toggleNotes(id){
+  const r=document.getElementById('nr-'+id);
+  if(r)r.style.display=r.style.display==='none'?'table-row':'none';
+}
+
+// ── Render trades ──────────────────────────────────────────────────────────
+function renderTrades(){
+  const sf=document.getElementById('tf-status').value;
+  const df=document.getElementById('tf-dir').value;
+  const tf=document.getElementById('tf-type').value;
+  const sesf=document.getElementById('tf-session').value;
+  let f=trades.filter(t=>(sf==='ALL'||t.status===sf)&&(df==='ALL'||t.dir===df)&&(tf==='ALL'||t.type===tf)&&(sesf==='ALL'||t.session===sesf));
+  document.getElementById('tr-count').textContent=f.length+' trade'+(f.length!==1?'s':'');
+  const body=document.getElementById('tr-body');
+  if(!f.length){body.innerHTML='<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--t3)">No trades yet</td></tr>';return;}
+  const emoMap={calm:'😌',confident:'💪',anxious:'😰',greedy:'🤑',revenge:'😤',tired:'😴',excited:'🔥',fomo:'😱',focused:'🎯',neutral:'😐'};
+  body.innerHTML=f.map((t,i)=>{
+    const ps=t.pnl!=null?(t.pnl>0?`<span style="color:var(--green);font-weight:500">+$${t.pnl.toFixed(2)}</span>`:`<span style="color:var(--red);font-weight:500">-$${Math.abs(t.pnl).toFixed(2)}</span>`):`<span style="color:var(--gold)">open</span>`;
+    const nb=t.news?`<span style="font-size:10px;color:var(--red);background:var(--rbg);padding:1px 5px;border-radius:4px" title="${t.news}">${t.news.slice(0,14)}${t.news.length>14?'…':''}</span>`:'—';
+    const em=t.emotion?emoMap[t.emotion]||t.emotion:'—';
+    const hasN=t.notes&&t.notes.trim();
+    // Calculate holding period
+    let holding=t.holdingTime||'—';
+    if(!t.holdingTime&&t.status==='OPEN'&&t.date&&t.time){
+      const entryDt=new Date(t.date+'T'+t.time+':00');
+      const diffMs=new Date()-entryDt;
+      if(diffMs>0){const h=Math.floor(diffMs/3600000);const m=Math.floor((diffMs%3600000)/60000);holding=(h>0?h+'h ':'')+m+'m';}
+    }
+    // Size with same-entry indicator
+    const sameEntry=f.filter(x=>x.entry===t.entry&&x.dir===t.dir&&x.date===t.date&&x.id!==t.id);
+    const sizeLabel=sameEntry.length>0?t.lot+' <span style="color:var(--gold);font-size:9px">(+'+sameEntry.length+')</span>':t.lot;
+    return `<tr style="cursor:${hasN?'pointer':'default'}" onclick="toggleNotes(${t.id})" title="${hasN?'Tap to see notes':''}">
+      <td style="color:var(--t3)">${f.length-i}</td>
+      <td style="font-family:var(--mono);font-size:11px">${t.date}<br><span style="color:var(--t3)">${t.time||''}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--t2)">${holding}</td>
+      <td><span class="badge ${t.dir.toLowerCase()}">${t.dir}</span></td>
+      <td style="font-family:var(--mono);font-size:12px">${sizeLabel}</td>
+      <td style="font-family:var(--mono)">${t.entry||'—'}</td>
+      <td style="font-family:var(--mono)">${t.exit||'—'}</td>
+      <td style="font-size:14px">${em}</td>
+      <td>${ps}</td>
+      <td>${nb}</td>
+      <td><button class="btn btn-red btn-sm" onclick="event.stopPropagation();deleteTrade(${t.id})">✕</button></td>
+    </tr>
+    ${hasN?`<tr id="nr-${t.id}" style="display:none"><td colspan="11" style="padding:0 9px 9px;background:var(--s3)"><div style="background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:9px 11px;font-size:12px;color:var(--t2);line-height:1.7"><span style="font-size:10px;color:var(--t3);text-transform:uppercase;display:block;margin-bottom:3px">My reason for entering</span>${t.notes}</div></td></tr>`:''}`;
+  }).join('');
+}
+
+function renderTradeStats(){
+  const closed=trades.filter(t=>t.status==='CLOSED'&&t.pnl!=null);
+  document.getElementById('s-total').textContent=trades.length;
+  if(!closed.length)return;
+  const wins=closed.filter(t=>t.pnl>0);
+  const losses=closed.filter(t=>t.pnl<=0);
+  const wr=Math.round(wins.length/closed.length*100);
+  document.getElementById('s-wr').textContent=wr+'%';
+  const gw=wins.reduce((s,t)=>s+t.pnl,0);
+  const gl=Math.abs(losses.reduce((s,t)=>s+t.pnl,0));
+  document.getElementById('s-pf').textContent=gl>0?(gw/gl).toFixed(2):'∞';
+  document.getElementById('s-best').textContent=wins.length?'+$'+Math.max(...wins.map(t=>t.pnl)).toFixed(2):'—';
+  document.getElementById('s-worst').textContent=losses.length?'-$'+Math.abs(Math.min(...losses.map(t=>t.pnl))).toFixed(2):'—';
+  document.getElementById('s-aw').textContent=wins.length?'$'+(gw/wins.length).toFixed(2):'—';
+  // Contra vs Trend
+  ['Contra','Trend'].forEach(tp=>{
+    const dt=closed.filter(t=>t.type===tp);
+    const dw=dt.filter(t=>t.pnl>0);
+    const key=tp==='Contra'?'s-contra':'s-trend';
+    document.getElementById(key).textContent=dt.length?Math.round(dw.length/dt.length*100)+'%':'—';
+  });
+  // Best session
+  const sessions=['London','NewYork','Asian'];
+  let bestSes='—',bestWr=-1;
+  sessions.forEach(s=>{
+    const st=closed.filter(t=>t.session===s);
+    const sw2=st.filter(t=>t.pnl>0);
+    if(st.length>=2){const w=Math.round(sw2.length/st.length*100);if(w>bestWr){bestWr=w;bestSes=s+' ('+w+'%)';}}
+  });
+  document.getElementById('s-session').textContent=bestSes;
+  // Emotion stats
+  const emoMap={calm:'😌 Calm',confident:'💪 Confident',anxious:'😰 Anxious',greedy:'🤑 Greedy',revenge:'😤 Revenge',tired:'😴 Tired',excited:'🔥 Excited',fomo:'😱 FOMO',focused:'🎯 Focused',neutral:'😐 Neutral'};
+  const emoStats={};
+  closed.filter(t=>t.emotion).forEach(t=>{
+    if(!emoStats[t.emotion])emoStats[t.emotion]={w:0,l:0};
+    t.pnl>0?emoStats[t.emotion].w++:emoStats[t.emotion].l++;
+  });
+  const emoEl=document.getElementById('emo-stats');
+  if(!Object.keys(emoStats).length){emoEl.innerHTML='No emotion data yet — tag your mood when logging trades.';return;}
+  emoEl.innerHTML=Object.entries(emoStats).map(([k,v])=>{
+    const tot=v.w+v.l;const wr2=Math.round(v.w/tot*100);
+    const col=wr2>=60?'var(--green)':wr2>=40?'var(--gold)':'var(--red)';
+    return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <span>${emoMap[k]||k}</span>
+      <span>${tot} trades</span>
+      <span style="color:${col};font-weight:500">${wr2}% win</span>
+    </div>`;
+  }).join('');
+}
+
+// ── Equity chart ───────────────────────────────────────────────────────────
+function renderEquityChart(){
+  // Build equity curve from trade history
+  const closed=trades.filter(t=>t.status==='CLOSED'&&t.pnl!=null&&t.eqClose!=null).sort((a,b)=>a.date+a.time>b.date+b.time?1:-1);
+  const labels=['Start',...closed.map((t,i)=>`#${i+1}`)];
+  const data=[BASE,...closed.map(t=>t.eqClose)];
+  // Add withdrawals as annotations
+  const ctx=document.getElementById('eq-chart').getContext('2d');
+  if(eqChart)eqChart.destroy();
+  eqChart=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[{
+        label:'Equity ($)',
+        data,
+        borderColor:'#C9A84C',
+        backgroundColor:'rgba(201,168,76,0.08)',
+        borderWidth:2,
+        pointRadius:3,
+        pointBackgroundColor:'#C9A84C',
+        fill:true,
+        tension:0.3
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>'$'+ctx.parsed.y.toFixed(2)}}
+      },
+      scales:{
+        x:{ticks:{color:'#5C5630',font:{size:10}},grid:{color:'#2E2A14'}},
+        y:{ticks:{color:'#5C5630',font:{size:10},callback:v=>'$'+v},grid:{color:'#2E2A14'}}
+      }
+    }
+  });
+
+  // Daily P&L bars
+  const byDay={};
+  trades.filter(t=>t.pnl!=null&&t.date).forEach(t=>{byDay[t.date]=(byDay[t.date]||0)+t.pnl;});
+  const days=Object.keys(byDay).sort().slice(-14);
+  const chartEl=document.getElementById('eq-daily');
+  if(!days.length){chartEl.innerHTML='<div style="padding:16px;color:var(--t3);font-size:12px">No closed trades yet</div>';return;}
+  const maxA=Math.max(...days.map(d=>Math.abs(byDay[d])),1);
+  chartEl.innerHTML=days.map(d=>{
+    const v=byDay[d];const pct=Math.round(Math.abs(v)/maxA*100);
+    const col=v>=40?'var(--gold)':v>0?'var(--green)':'var(--red)';
+    return `<div class="bar-row">
+      <span class="bd">${d.slice(5)}</span>
+      <div class="bw"><div class="bf" style="width:${pct}%;background:${col}"></div></div>
+      <span class="bv" style="color:${col}">${(v>=0?'+':'')+v.toFixed(2)}</span>
+      <span style="font-size:10px;color:${v>=40?'var(--gold)':'var(--t3)'};width:40px;text-align:right">${v>=40?'✓ $40':''}</span>
+    </div>`;
+  }).join('');
+
+  // Streak
+  renderStreak();
+}
+
+function renderStreak(){
+  const closed=trades.filter(t=>t.status==='CLOSED'&&t.pnl!=null).sort((a,b)=>a.date>b.date?1:-1);
+  let cur=0,best=0,tempCur=0;
+  closed.forEach(t=>{if(t.pnl>0){tempCur++;if(tempCur>best)best=tempCur;}else{tempCur=0;}});
+  cur=tempCur;
+  document.getElementById('streak-cur').textContent=cur;
+  document.getElementById('streak-best').textContent=best;
+  document.getElementById('hdr-streak').textContent=cur>0?'🔥'+cur:'—';
+  const el=document.getElementById('streak-list');
+  if(!closed.length){el.innerHTML='No trades yet.';return;}
+  const last5=closed.slice(-5).reverse();
+  el.innerHTML='<strong style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">Last 5 closed trades</strong><br><br>'+
+    last5.map(t=>`<span style="font-size:13px">${t.pnl>0?'✅':'❌'}</span> ${t.date} ${t.dir} @ ${t.entry} → <span style="color:${t.pnl>0?'var(--green)':'var(--red)'}">${t.pnl>0?'+':''}$${t.pnl.toFixed(2)}</span><br>`).join('');
+}
+
+// ── Drawdown alert ──────────────────────────────────────────────────────────
+function checkDDAlert(){
+  const{today}=wibNow();
+  const todayTrades=trades.filter(t=>t.date===today&&t.pnl!=null);
+  const todayPnl=todayTrades.reduce((s,t)=>s+t.pnl,0);
+  const bar=document.getElementById('alert-bar');
+  const ddEl=document.getElementById('d-dd');
+  if(todayPnl<=-30){
+    bar.className='alert-bar show dd';
+    bar.innerHTML='🚨 <strong>DRAWDOWN ALERT</strong> — You are down $'+Math.abs(todayPnl).toFixed(2)+' today. Daily loss limit ($30) reached. Stop trading for today.';
+    if(ddEl){ddEl.style.color='var(--purple)';ddEl.textContent='🚨 Down $'+Math.abs(todayPnl).toFixed(2)+' today — daily stop loss reached. Close the platform.';}
+  }else if(todayPnl>=40){
+    bar.className='alert-bar show warn';
+    bar.innerHTML='✅ <strong>TARGET HIT</strong> — You are up $'+todayPnl.toFixed(2)+' today. Daily goal achieved. Consider stopping.';
+    if(ddEl){ddEl.style.color='var(--gold)';ddEl.textContent='✅ Target hit — up $'+todayPnl.toFixed(2)+' today. Lock in profits.';}
+  }else{
+    bar.className='alert-bar';
+    if(ddEl){ddEl.style.color='var(--t2)';ddEl.textContent='Today P&L: $'+todayPnl.toFixed(2)+'. No drawdown alert. ($30 daily stop | $40 target)';}
+  }
+}
+
+// ── Pre-trade checklist ────────────────────────────────────────────────────
+function toggleChk(i){
+  chkStates[i]=(chkStates[i]+1)%3; // 0=unchecked, 1=done, 2=fail
+  const el=document.getElementById('chk'+i);
+  el.className='chk'+(['','done','fail'][chkStates[i]]);
+  updateChkResult();
+}
+function updateChkResult(){
+  const done=chkStates.filter(s=>s===1).length;
+  const fail=chkStates.filter(s=>s===2).length;
+  const total=chkStates.length;
+  const el=document.getElementById('chk-result');
+  if(fail>0){el.style.background='var(--rbg)';el.style.color='var(--red)';el.textContent=fail+' condition'+(fail>1?'s':'')+' NOT met — do not enter this trade';}
+  else if(done===total){el.style.background='var(--gbg)';el.style.color='var(--green)';el.textContent='✓ All '+total+' conditions met — you may enter';}
+  else{el.style.background='var(--s3)';el.style.color='var(--t2)';el.textContent=done+' / '+total+' checked';}
+}
+function resetChecklist(){chkStates=Array(10).fill(0);for(let i=0;i<10;i++){const el=document.getElementById('chk'+i);if(el)el.className='chk';}updateChkResult();}
+
+// ── News impact log ────────────────────────────────────────────────────────
+function saveNewsEvent(){
+  const{today}=wibNow();
+  const e={
+    id:Date.now(),
+    date:document.getElementById('ni-date').value||today,
+    time:document.getElementById('ni-time').value,
+    type:document.getElementById('ni-type').value,
+    actual:document.getElementById('ni-actual').value,
+    goldReact:document.getElementById('ni-react').value,
+    dxyReact:document.getElementById('ni-dxy').value,
+    notes:document.getElementById('ni-notes').value.trim()
+  };
+  newsEvents.unshift(e);
+  DB.set('xau_news_events',newsEvents);
+  renderNewsLog();
+  ['ni-actual','ni-notes'].forEach(id=>document.getElementById(id).value='');
+  toast('News event saved ✓');
+}
+function deleteNewsEvent(id){
+  if(!confirm('Delete?'))return;
+  newsEvents=newsEvents.filter(e=>e.id!==id);
+  DB.set('xau_news_events',newsEvents);
+  renderNewsLog();
+}
+function renderNewsLog(){
+  const el=document.getElementById('ni-list');
+  if(!newsEvents.length){el.innerHTML='<div style="padding:20px;text-align:center;color:var(--t3);font-size:12px">No news events logged yet</div>';return;}
+  const reactCol={'Gold ↑ Strong':'var(--green)','Gold ↑ Mild':'var(--green)','Neutral':'var(--t2)','Gold ↓ Mild':'var(--red)','Gold ↓ Strong':'var(--red)'};
+  el.innerHTML=newsEvents.map(e=>`
+    <div class="ni-row">
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:500;color:var(--text)">${e.type} — ${e.date} ${e.time}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:2px">${e.actual||'—'}</div>
+        <div style="font-size:11px;color:${reactCol[e.goldReact]||'var(--t2)'};margin-top:2px">${e.goldReact} | ${e.dxyReact}</div>
+        ${e.notes?`<div style="font-size:11px;color:var(--t2);margin-top:4px;line-height:1.5">${e.notes}</div>`:''}
+      </div>
+      <button class="btn btn-red btn-sm" onclick="deleteNewsEvent(${e.id})" style="margin-left:10px">✕</button>
+    </div>`).join('');
+}
+
+// ── Analysis log ───────────────────────────────────────────────────────────
+function saveAnalysis(){
+  const{today}=wibNow();
+  const body=document.getElementById('an-body').value.trim();
+  if(!body){toast('Paste analysis content first',true);return;}
+  analyses.unshift({id:Date.now(),date:document.getElementById('an-date').value||today,type:document.getElementById('an-type').value,title:document.getElementById('an-title').value.trim(),body,takeaway:document.getElementById('an-take').value.trim(),saved:new Date().toISOString()});
+  DB.set('xau_analyses',analyses);renderAnalysis();clearAnalysis();toast('Analysis saved ✓');
+  sbSaveAnalysis(analyses[0]);
+}
+function clearAnalysis(){
+  ['an-title','an-body','an-take'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('an-type').value='Daily';
+}
+function deleteAnalysis(id){if(!confirm('Delete?'))return;analyses=analyses.filter(a=>a.id!==id);DB.set('xau_analyses',analyses);renderAnalysis();}
+function toggleBody(id){const el=document.getElementById('ab-'+id);const btn=document.getElementById('at-'+id);if(el.style.display==='none'){el.style.display='block';btn.textContent='▲ collapse';}else{el.style.display='none';btn.textContent='▼ read more';}}
+function renderAnalysis(){
+  const f=document.getElementById('an-filter').value;
+  const s=document.getElementById('an-search').value.toLowerCase();
+  let filtered=analyses.filter(a=>(f==='ALL'||a.type===f)&&(!s||a.title.toLowerCase().includes(s)||a.body.toLowerCase().includes(s)));
+  document.getElementById('an-count').textContent=filtered.length+' entr'+(filtered.length===1?'y':'ies');
+  const el=document.getElementById('an-list');
+  if(!filtered.length){el.innerHTML='<div style="padding:24px;text-align:center;color:var(--t3);font-size:12px">'+(analyses.length?'No matches':'No analyses yet — paste your first Claude analysis above')+'</div>';return;}
+  const cols={Daily:'var(--blue)',Weekly:'var(--gold)',Trade:'var(--green)',News:'var(--red)',Pattern:'var(--purple)'};
+  el.innerHTML=filtered.map(a=>`
+    <div class="card" style="border-left:3px solid ${cols[a.type]||'var(--t2)'};border-radius:0 10px 10px 0">
+      <div style="display:flex;gap:9px;margin-bottom:7px;align-items:flex-start">
+        <span style="font-size:10px;padding:2px 8px;border-radius:999px;background:${cols[a.type]||'var(--t3)'}22;color:${cols[a.type]||'var(--t2)'};font-weight:500">${a.type}</span>
+        <div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--text)">${a.title||'(no title)'}</div><div style="font-size:10px;color:var(--t3)">${a.date}</div></div>
+        <button class="btn btn-red btn-sm" onclick="deleteAnalysis(${a.id})">✕</button>
+      </div>
+      <div id="ab-${a.id}" style="display:none;font-size:12px;color:var(--t2);line-height:1.8;white-space:pre-wrap;background:var(--s3);border-radius:6px;padding:10px;margin-bottom:7px">${a.body}</div>
+      <button id="at-${a.id}" onclick="toggleBody(${a.id})" style="background:none;border:none;font-size:11px;color:var(--t3);cursor:pointer;padding:0">▼ read more</button>
+      ${a.takeaway?`<div style="margin-top:9px;padding:8px 11px;background:var(--gold-bg);border:1px solid var(--gold-dim);border-radius:6px;font-size:11px;color:var(--gold);line-height:1.6"><strong>My takeaways:</strong><br>${a.takeaway}</div>`:''}
+    </div>`).join('');
+}
+
+// ── Withdrawals ────────────────────────────────────────────────────────────
+function saveWith(){
+  const{today}=wibNow();
+  const amt=parseFloat(document.getElementById('w-amt').value);
+  if(isNaN(amt)||amt<=0){toast('Enter withdrawal amount',true);return;}
+  const eqAfter=parseFloat(document.getElementById('w-after').value)||BASE;
+  withdrawals.unshift({id:Date.now(),date:document.getElementById('w-date').value||today,amount:amt,eqBefore:parseFloat(document.getElementById('w-before').value)||equity,eqAfter,notes:document.getElementById('w-notes').value});
+  equity=eqAfter;
+  DB.set('xau_withdrawals',withdrawals);DB.set('xau_equity',equity);
+  updateHdr();renderWith();toast('Withdrawal recorded ✓');
+  sbSaveWithdrawal(withdrawals[0]);autoSync();
+  ['w-amt','w-notes'].forEach(id=>document.getElementById(id).value='');
+}
+function deleteWith(id){if(!confirm('Delete?'))return;withdrawals=withdrawals.filter(w=>w.id!==id);DB.set('xau_withdrawals',withdrawals);renderWith();}
+function renderWith(){
+  const total=withdrawals.reduce((s,w)=>s+w.amount,0);
+  document.getElementById('w-total').textContent='$'+total.toFixed(2);
+  document.getElementById('w-cycles').textContent=withdrawals.length;
+  document.getElementById('w-ret').textContent=total?Math.round(total/BASE*100)+'%':'0%';
+  const el=document.getElementById('w-list');
+  if(!withdrawals.length){el.innerHTML='<div style="padding:16px;text-align:center;color:var(--t3);font-size:12px">No withdrawals yet</div>';return;}
+  el.innerHTML=withdrawals.map(w=>`<div class="ni-row">
+    <span style="font-family:var(--mono);color:var(--t2)">${w.date}</span>
+    <span style="color:var(--t3);font-size:11px">${w.notes||'—'}</span>
+    <span style="color:var(--gold);font-weight:500;font-family:var(--mono)">-$${w.amount.toFixed(2)}</span>
+    <span style="color:var(--t3);font-size:10px">${w.eqBefore?'$'+w.eqBefore.toFixed(0)+'→$'+w.eqAfter.toFixed(0):''}</span>
+    <button class="btn btn-red btn-sm" onclick="deleteWith(${w.id})">✕</button>
+  </div>`).join('');
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────────────
+function renderDash(){
+  const{today}=wibNow();
+  const todayTr=trades.filter(t=>t.date===today&&t.pnl!=null);
+  const todayPnl=todayTr.reduce((s,t)=>s+t.pnl,0);
+  const closed=trades.filter(t=>t.pnl!=null);
+  const wins=closed.filter(t=>t.pnl>0);
+  const wr=closed.length?Math.round(wins.length/closed.length*100):null;
+  const total_with=withdrawals.reduce((s,w)=>s+w.amount,0);
+  document.getElementById('d-eq').textContent='$'+equity.toFixed(2);
+  const td=document.getElementById('d-today');
+  td.textContent=(todayPnl>=0?'+':'')+'$'+todayPnl.toFixed(2);
+  td.className='sv '+(todayPnl>0?'green':todayPnl<0?'red':'');
+  document.getElementById('d-today-sub').textContent=todayTr.length+' trades today';
+  document.getElementById('d-wr').textContent=wr!=null?wr+'%':'—';
+  document.getElementById('d-wr-sub').textContent=closed.length+' closed';
+  document.getElementById('d-with').textContent='$'+total_with.toFixed(2);
+  document.getElementById('d-cycles').textContent=withdrawals.length+' cycles';
+  const byDay={};trades.filter(t=>t.pnl!=null&&t.date).forEach(t=>{byDay[t.date]=(byDay[t.date]||0)+t.pnl;});
+  const hitDays=Object.values(byDay).filter(v=>v>=40).length;
+  document.getElementById('d-hit').textContent=hitDays;
+  // Streak
+  const closedS=trades.filter(t=>t.status==='CLOSED'&&t.pnl!=null).sort((a,b)=>a.date>b.date?1:-1);
+  let cur=0;closedS.forEach(t=>t.pnl>0?cur++:cur=0);
+  document.getElementById('d-streak').textContent=cur>0?'🔥'+cur:'—';
+  document.getElementById('d-streak-sub').textContent='winning streak';
+  // Progress
+  const nextT=Math.ceil((equity-BASE)/100)*100+BASE+100;
+  const toT=Math.max(0,nextT-equity);
+  const pct=Math.min(100,Math.round(Math.max(0,(equity-BASE)/200*100)));
+  document.getElementById('pg-fill').style.width=pct+'%';
+  document.getElementById('pg-pct').textContent=pct+'%';
+  document.getElementById('pg-eq').textContent='$'+equity.toFixed(2);
+  document.getElementById('pg-tgt').textContent='$'+(BASE+200);
+  document.getElementById('pg-sub').textContent=toT>0?'Need $'+toT.toFixed(2)+' more to trigger withdrawal':'Trigger reached — consider withdrawing!';
+  // Open trades
+  const opens=trades.filter(t=>t.status==='OPEN');
+  document.getElementById('d-opens').innerHTML=opens.length?opens.map(t=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px"><span class="badge ${t.dir.toLowerCase()}">${t.dir}</span><span style="font-family:var(--mono);color:var(--gold)">@${t.entry}</span><span style="color:var(--t2)">${t.lot}lot</span><span style="font-size:10px;color:var(--t3)">${t.date}</span></div>`).join(''):'<div style="padding:16px;text-align:center;color:var(--t3);font-size:12px">No open positions</div>';
+  // Next news
+  const{now}=wibNow();
+  const upcoming=getCal().filter(e=>(new Date(e.date+'T'+e.time+':00')-now)/60000>0).slice(0,3);
+  document.getElementById('d-news').innerHTML=upcoming.length?upcoming.map(e=>{const diff=Math.round((new Date(e.date+'T'+e.time+':00')-now)/60000);return`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px"><div><span class="idot ${e.impact==='HIGH'?'hi':e.impact==='MED'?'med':'lo'}" style="margin-right:5px"></span><span style="color:var(--text)">${e.event}</span></div><span style="font-family:var(--mono);color:${diff<=30?'var(--red)':'var(--t3)'};">${diff<60?diff+'m':Math.floor(diff/60)+'h'}</span></div>`;}).join(''):'<div style="padding:12px;color:var(--t3);font-size:12px">No upcoming events</div>';
+  // Daily bars
+  const days=Object.keys(byDay).sort().slice(-10);
+  const dChart=document.getElementById('d-chart');
+  if(!days.length){dChart.innerHTML='<div style="padding:16px;color:var(--t3);font-size:12px">No history yet</div>';return;}
+  const maxA=Math.max(...days.map(d=>Math.abs(byDay[d])),1);
+  dChart.innerHTML=days.map(d=>{const v=byDay[d];const pct=Math.round(Math.abs(v)/maxA*100);const col=v>=40?'var(--gold)':v>0?'var(--green)':'var(--red)';return`<div class="bar-row"><span class="bd">${d.slice(5)}</span><div class="bw"><div class="bf" style="width:${pct}%;background:${col}"></div></div><span class="bv" style="color:${col}">${(v>=0?'+':'')+v.toFixed(2)}</span><span style="font-size:10px;color:${v>=40?'var(--gold)':'var(--t3)'};width:40px;text-align:right">${v>=40?'✓':''}</span></div>`;}).join('');
+  checkDDAlert();
+}
+
+// ── Header ─────────────────────────────────────────────────────────────────
+function updateHdr(){
+  document.getElementById('hdr-eq').textContent='$'+equity.toFixed(2);
+  const{today}=wibNow();
+  const tp=trades.filter(t=>t.date===today&&t.pnl!=null).reduce((s,t)=>s+t.pnl,0);
+  const el=document.getElementById('hdr-today');
+  el.textContent=(tp>=0?'+':'')+'$'+tp.toFixed(2);
+  el.className='pv '+(tp>0?'up':tp<0?'dn':'');
+}
+
+// ── Ask Claude ─────────────────────────────────────────────────────────────
+async function askClaude(){
+  const key=DB.get('anthropic_key','');
+  const box=document.getElementById('claude-box');
+  const saveRow=document.getElementById('claude-save-row');
+  const btn=document.getElementById('ask-btn');
+  const q=document.getElementById('claude-q').value.trim();
+  if(!key){box.style.display='block';box.style.color='var(--red)';box.textContent='No API key. Go to Setup tab → paste your Anthropic API key.';return;}
+  if(!q){toast('Describe your chart setup first',true);return;}
+  const entry=document.getElementById('f-entry').value;
+  const dir=document.getElementById('f-dir').value;
+  const lot=document.getElementById('f-lot').value;
+  const news=document.getElementById('f-news').value;
+  const type=document.getElementById('f-type').value;
+  btn.textContent='Asking...';btn.disabled=true;
+  box.style.display='block';box.style.color='var(--t2)';box.textContent='Analysing your setup...';saveRow.style.display='none';
+  const prompt=`You are an experienced XAUUSD trader and advisor. A trader wants pre-trade advice.
+
+Trade setup:
+- Direction: ${dir} (${type} strategy)
+- Entry: ${entry||'not set'}
+- Lot: ${lot} (0.03 lot = $0.30/pip)
+- Account: $${equity.toFixed(2)} (base $300, target $40/day)
+- Style: No SL, monitors positions actively, M1/M5 scalper
+- News: ${news||'none'}
+
+Trader's chart reasoning:
+${q}
+
+Give direct advice in under 180 words:
+1. Setup quality (strong/ok/weak) and why
+2. Key risk to watch
+3. Suggested TP target based on nearest structure
+4. One-line verdict: GO ✅ / WAIT ⏳ / AVOID ❌`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:350,messages:[{role:'user',content:prompt}]})});
+    const d=await r.json();
+    if(d.content?.[0]){
+      const advice=d.content[0].text;
+      box.style.color='var(--text)';box.textContent=advice;
+      saveRow.style.display='block';box.dataset.advice=advice;
+      box.dataset.setup=`${dir} @ ${entry||'?'} | ${new Date().toISOString().slice(0,10)}`;
+    }else{box.style.color='var(--red)';box.textContent='Error: '+(d.error?.message||'Check API key');}
+  }catch(e){box.style.color='var(--red)';box.textContent='Network error. Check API key in Setup.';}
+  btn.textContent='Ask Claude ✦';btn.disabled=false;
+}
+function saveAdvice(){
+  const box=document.getElementById('claude-box');
+  if(!box.dataset.advice)return;
+  analyses.unshift({id:Date.now(),date:new Date().toISOString().slice(0,10),type:'Trade',title:'Pre-trade: '+box.dataset.setup,body:box.dataset.advice,takeaway:'',saved:new Date().toISOString()});
+  DB.set('xau_analyses',analyses);toast('Saved to Analysis Log ✓');document.getElementById('claude-save-row').style.display='none';
+}
+
+// ── Telegram ───────────────────────────────────────────────────────────────
+function saveTg(){DB.set('tg_token',document.getElementById('tg-tok').value);DB.set('tg_chatid',document.getElementById('tg-cid').value);}
+async function testTg(){
+  const tok=DB.get('tg_token','');const cid=DB.get('tg_chatid','');
+  if(!tok||!cid){toast('Enter token and chat ID first',true);return;}
+  const msg=encodeURIComponent('⚡ XAU Tracker — Test alert!\nYour Telegram alerts are working.');
+  try{const r=await fetch(`https://api.telegram.org/bot${tok}/sendMessage?chat_id=${cid}&text=${msg}`);const d=await r.json();if(d.ok){document.getElementById('tg-status').textContent='✓ Sent!';document.getElementById('tg-status').style.color='var(--green)';}else{toast('Error: '+d.description,true);}}catch{toast('Network error',true);}
+}
+async function sendTg(msg){
+  const tok=DB.get('tg_token','');const cid=DB.get('tg_chatid','');
+  if(!tok||!cid)return;
+  try{await fetch(`https://api.telegram.org/bot${tok}/sendMessage?chat_id=${cid}&text=${encodeURIComponent(msg)}`);}catch{}
+}
+
+// ── Setup ──────────────────────────────────────────────────────────────────
+function saveKey(){
+  const k=document.getElementById('api-key').value.trim();
+  DB.set('anthropic_key',k);
+  const s=document.getElementById('key-status');
+  if(k.startsWith('sk-ant-')){s.textContent='✓ Key saved';s.style.color='var(--green)';}
+  else if(k){s.textContent='Saved (check format)';s.style.color='var(--gold)';}
+}
+async function setupNotif(){
+  if(!('Notification' in window)){toast('Not supported',true);return;}
+  const p=await Notification.requestPermission();
+  if(p==='granted'){document.getElementById('push-status').textContent='✓ Push enabled';document.getElementById('push-status').style.color='var(--green)';DB.set('push_on',true);toast('Push enabled ✓');}
+  else toast('Denied — use Telegram',true);
+}
+function push(title,body){if(Notification.permission==='granted')new Notification(title,{body});}
+
+// ── News alert check ───────────────────────────────────────────────────────
+function checkNewsAlert(trade){
+  const{now}=wibNow();
+  const imm=getCal().filter(e=>{const et=new Date(e.date+'T'+e.time+':00');const d=(et-now)/60000;return d>0&&d<=30&&e.impact==='HIGH';});
+  if(imm.length&&trade.status==='OPEN'){
+    const diff=Math.round((new Date(imm[0].date+'T'+imm[0].time+':00')-now)/60000);
+    const msg=`🚨 XAU Tracker Warning!\n\nYou opened ${trade.dir} @ ${trade.entry}\n\n⚠️ HIGH IMPACT news in ${diff} min:\n📌 ${imm[0].event}\n\nMonitor your position!`;
+    sendTg(msg);push('⚠️ News Alert',imm[0].event+' in '+diff+' min!');
+  }
+}
+function runNewsChecks(){
+  const{now}=wibNow();
+  const opens=trades.filter(t=>t.status==='OPEN');
+  const calSource=liveCal&&liveCal.length?liveCal:getCal();
+  calSource.filter(e=>e.impact==='HIGH').forEach(e=>{
+    const diff=(new Date(e.date+'T'+e.time+':00')-now)/60000;
+    if(diff>29&&diff<=31){
+      const msg=`⚡ XAU Tracker — 30 Min Alert!\n\n📌 ${e.event}\n⏰ ${e.time} WIB\n💥 HIGH IMPACT\n${opens.length?'\n⚠️ You have '+opens.length+' open trade'+(opens.length>1?'s':'')+'. Monitor closely!':''}`;
+      sendTg(msg);push('⚠️ 30-min warning',e.event+' at '+e.time+' WIB');
+      const bar=document.getElementById('alert-bar');
+      bar.className='alert-bar show warn';
+      bar.innerHTML=`⚠️ <strong>30-MIN WARNING:</strong> ${e.event} at ${e.time} WIB — HIGH IMPACT${opens.length?' | '+opens.length+' open trade(s)':''}`;
+    }
+  });
+}
+
+// ── MT5 Import ─────────────────────────────────────────────────────────────
+function handleFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{const c=ev.target.result;if(f.name.match(/\.html?$/i))parseMT5HTML(c);else parseCSV(c);};r.readAsText(f);}
+function parseMT5HTML(html){
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  parsedImp=[];
+  Array.from(doc.querySelectorAll('tr')).slice(1).forEach(row=>{
+    const cells=Array.from(row.querySelectorAll('td')).map(c=>c.textContent.trim());
+    if(cells.length>=9&&(cells[2]?.toLowerCase().includes('buy')||cells[2]?.toLowerCase().includes('sell'))){
+      parsedImp.push({ticket:cells[0],date:cells[1]?.slice(0,10)||'',time:cells[1]?.slice(11,16)||'',dir:cells[2].toUpperCase().includes('BUY')?'BUY':'SELL',lot:parseFloat(cells[3])||0.03,entry:parseFloat(cells[5])||0,exit:parseFloat(cells[6])||null,pnl:parseFloat(cells[cells.length-2])||null,notes:'MT5 import #'+cells[0]});
+    }
+  });
+  showImpPreview();
+}
+function parseCSV(csv){
+  parsedImp=[];
+  csv.split('\n').slice(1).filter(l=>l.trim()).forEach(line=>{
+    const c=line.split(',').map(x=>x.trim().replace(/^"|"$/g,''));
+    if(!c[2])return;const dir=c[2].toUpperCase();
+    if(!dir.includes('BUY')&&!dir.includes('SELL'))return;
+    parsedImp.push({ticket:c[0],date:(c[1]||'').slice(0,10),time:(c[1]||'').slice(11,16),dir:dir.includes('BUY')?'BUY':'SELL',lot:parseFloat(c[3])||0.03,entry:parseFloat(c[4])||0,exit:parseFloat(c[5])||null,pnl:parseFloat(c[c.length-2])||null,notes:'CSV import'});
+  });
+  showImpPreview();
+}
+function showImpPreview(){
+  const st=document.getElementById('imp-status');const pv=document.getElementById('imp-preview');
+  st.style.display='block';
+  if(!parsedImp.length){st.innerHTML='<span style="color:var(--red)">No trades found. Check format.</span>';return;}
+  st.innerHTML=`<span style="color:var(--green)">Found ${parsedImp.length} trades</span>`;
+  pv.style.display='block';
+  document.getElementById('imp-tbl').innerHTML=`<thead><tr><th>Date</th><th>Dir</th><th>Entry</th><th>Exit</th><th>Lot</th><th>P&L</th></tr></thead><tbody>${parsedImp.slice(0,10).map(t=>`<tr><td>${t.date}</td><td><span class="badge ${t.dir.toLowerCase()}">${t.dir}</span></td><td>${t.entry}</td><td>${t.exit||'—'}</td><td>${t.lot}</td><td style="color:${t.pnl>0?'var(--green)':t.pnl<0?'var(--red)':'var(--t2)'}">${t.pnl!=null?(t.pnl>0?'+':'')+t.pnl.toFixed(2):'—'}</td></tr>`).join('')}${parsedImp.length>10?`<tr><td colspan="6" style="text-align:center;color:var(--t3)">...and ${parsedImp.length-10} more</td></tr>`:''}</tbody>`;
+}
+function doImport(){
+  parsedImp.forEach(t=>{
+    trades.unshift({id:Date.now()+Math.random(),date:t.date,time:t.time,dir:t.dir,type:'',session:'',lot:t.lot,entry:t.entry,eqOpen:equity,status:t.pnl!=null?'CLOSED':'OPEN',exit:t.exit,pnl:t.pnl,eqClose:t.pnl!=null?equity+t.pnl:null,notes:t.notes,news:'',emotion:''});
+    if(t.pnl!=null)equity+=t.pnl;
+  });
+  DB.set('xau_trades',trades);DB.set('xau_equity',equity);
+  updateHdr();clearImport();toast(`Imported ${parsedImp.length} trades ✓`);parsedImp=[];
+}
+function clearImport(){document.getElementById('imp-status').style.display='none';document.getElementById('imp-preview').style.display='none';document.getElementById('f-file').value='';parsedImp=[];}
+
+// ── Export / Import / Reset ────────────────────────────────────────────────
+function exportData(){const d={trades,withdrawals,analyses,newsEvents,equity,exported:new Date().toISOString()};const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='xau_tracker_'+new Date().toISOString().slice(0,10)+'.json';a.click();}
+function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.trades){trades=d.trades;DB.set('xau_trades',trades);}if(d.withdrawals){withdrawals=d.withdrawals;DB.set('xau_withdrawals',withdrawals);}if(d.analyses){analyses=d.analyses;DB.set('xau_analyses',analyses);}if(d.newsEvents){newsEvents=d.newsEvents;DB.set('xau_news_events',newsEvents);}if(d.equity){equity=d.equity;DB.set('xau_equity',equity);}updateHdr();renderDash();toast('Data imported ✓');}catch{toast('Invalid file',true);}};r.readAsText(f);}
+function resetAll(){if(!confirm('Reset ALL data? Cannot be undone.'))return;trades=[];withdrawals=[];analyses=[];newsEvents=[];equity=BASE;['xau_trades','xau_withdrawals','xau_analyses','xau_news_events','xau_equity'].forEach(k=>DB.set(k,k==='xau_equity'?BASE:[]));updateHdr();renderDash();toast('Reset done');}
+
+
+// ── Photo Import ──────────────────────────────────────────────────────────
+let photoImages=[];
+let photoTrades=[];
+let photoSummary=null;
+
+function initPhotoImport(){
+  // re-render preview if images already loaded
+  renderPhotoPreview();
+}
+
+function handlePhotoDrop(e){
+  e.preventDefault();
+  document.getElementById('photo-upload-zone').style.borderColor='var(--border2)';
+  const files=Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/'));
+  addPhotoFiles(files);
+}
+
+function handlePhotoSelect(e){
+  const files=Array.from(e.target.files).filter(f=>f.type.startsWith('image/'));
+  addPhotoFiles(files);
+}
+
+function addPhotoFiles(files){
+  files.forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      photoImages.push({file,dataUrl:ev.target.result,name:file.name});
+      renderPhotoPreview();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function removePhoto(i){
+  photoImages.splice(i,1);
+  renderPhotoPreview();
+}
+
+function renderPhotoPreview(){
+  const grid=document.getElementById('photo-preview-grid');
+  const btn=document.getElementById('photo-parse-btn');
+  if(!photoImages.length){
+    grid.style.display='none';
+    if(btn)btn.style.display='none';
+    return;
+  }
+  grid.style.display='grid';
+  grid.innerHTML=photoImages.map((img,i)=>`
+    <div style="position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--border);aspect-ratio:9/16">
+      <img src="${img.dataUrl}" style="width:100%;height:100%;object-fit:cover">
+      <button onclick="removePhoto(${i})" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.7);border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;color:#fff;font-size:10px">✕</button>
+    </div>`).join('');
+  if(btn)btn.style.display='block';
+  btn.textContent=`⚡ Extract trades from ${photoImages.length} screenshot${photoImages.length>1?'s':''}`;
+}
+
+async function parsePhotoTrades(){
+  const key=DB.get('anthropic_key','');
+  const statusEl=document.getElementById('photo-status');
+  const errorEl=document.getElementById('photo-error');
+  const resultsEl=document.getElementById('photo-results');
+  const btn=document.getElementById('photo-parse-btn');
+
+  if(!key){
+    errorEl.style.display='block';
+    errorEl.innerHTML='No API key found. Go to ⚙️ Setup tab → paste your Anthropic API key.';
+    return;
+  }
+  if(!photoImages.length) return;
+
+  // If more than 3 photos, process in batches of 3
+  const BATCH_SIZE = 3;
+  if(photoImages.length > BATCH_SIZE){
+    statusEl.style.display='block';
+    statusEl.innerHTML=`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);margin-right:8px;animation:pulse 1s infinite"></span>Processing ${photoImages.length} photos in batches of ${BATCH_SIZE}...`;
+    errorEl.style.display='none';
+    resultsEl.style.display='none';
+    btn.textContent='Processing...';btn.disabled=true;
+
+    let allTrades = [];
+    let allSummary = null;
+    const batches = [];
+    for(let i=0;i<photoImages.length;i+=BATCH_SIZE){
+      batches.push(photoImages.slice(i,i+BATCH_SIZE));
+    }
+
+    for(let b=0;b<batches.length;b++){
+      statusEl.innerHTML=`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);margin-right:8px;animation:pulse 1s infinite"></span>Processing batch ${b+1} of ${batches.length} (${batches[b].length} photos)...`;
+      try{
+        const result = await parseBatch(batches[b], key);
+        if(result && result.trades){
+          allTrades = allTrades.concat(result.trades);
+          if(!allSummary) allSummary = result.summary;
+          else if(allSummary && result.summary){
+            allSummary.totalTrades = (allSummary.totalTrades||0) + (result.summary.totalTrades||0);
+            allSummary.totalPnl = ((allSummary.totalPnl||0) + (result.summary.totalPnl||0));
+            allSummary.winCount = (allSummary.winCount||0) + (result.summary.winCount||0);
+            allSummary.lossCount = (allSummary.lossCount||0) + (result.summary.lossCount||0);
+          }
+        }
+      }catch(e){
+        console.warn('Batch '+b+' failed:',e.message);
+        statusEl.innerHTML+=`<br><span style="color:var(--gold)">Batch ${b+1} had issues — continuing...</span>`;
+      }
+    }
+
+    photoTrades = allTrades;
+    photoSummary = allSummary;
+    statusEl.style.display='none';
+    btn.textContent=`⚡ Extract trades from ${photoImages.length} screenshots`;
+    btn.disabled=false;
+
+    if(allTrades.length===0){
+      errorEl.style.display='block';
+      errorEl.innerHTML='Could not extract any trades from the photos. Try uploading fewer at a time or use the Positions tab.';
+      return;
+    }
+    renderPhotoResults({trades:allTrades, summary:allSummary});
+    resultsEl.style.display='block';
+    return;
+  }
+
+  // Single batch (3 or fewer photos)
+  statusEl.style.display='block';
+  statusEl.innerHTML=`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);margin-right:8px;animation:pulse 1s infinite"></span>Analysing ${photoImages.length} screenshot${photoImages.length>1?'s':''}... ~10 seconds`;
+  errorEl.style.display='none';
+  resultsEl.style.display='none';
+  btn.textContent='Analysing...';btn.disabled=true;
+
+  try{
+    const result = await parseBatch(photoImages, key);
+    photoTrades = result.trades||[];
+    photoSummary = result.summary||null;
+    statusEl.style.display='none';
+    resultsEl.style.display='block';
+    renderPhotoResults(result);
+  }catch(err){
+    statusEl.style.display='none';
+    errorEl.style.display='block';
+    const errMsg = err.message||'Unknown error';
+    let hint = '';
+    if(errMsg.includes('JSON')||errMsg.includes('parse')||errMsg.includes('Load failed')){
+      hint = '<br>Response was cut off — too many trades in one batch. The app will now auto-split into batches of 3. Try again.';
+    } else if(errMsg.includes('401')||errMsg.includes('api')){
+      hint = '<br>Check your Anthropic API key in Setup tab.';
+    }
+    errorEl.innerHTML = '<strong>Could not parse trades.</strong><br>' + errMsg + hint + '<br><br><span style="color:var(--t3)">Tip: Use the Positions tab screenshots — they are more compact and easier to parse than Deals tab.</span>';
+  }
+  btn.textContent=`⚡ Extract trades from ${photoImages.length} screenshot${photoImages.length>1?'s':''}`;
+  btn.disabled=false;
+}
+
+async function parseBatch(images, key){
+  const imageContents = images.map(img=>({
+    type:'image',
+    source:{type:'base64',media_type:img.file.type,data:img.dataUrl.split(',')[1]}
+  }));
+
+  const prompt = `Analyze these MT5 trade history screenshots. They may include Positions tab and/or Deals tab screenshots together.
+
+YOUR MAIN JOB: Extract every completed trade with as much detail as possible including holding time.
+
+HOW TO CALCULATE HOLDING TIME:
+- If you see BOTH Positions AND Deals screenshots: use Deals tab to find entry time for each trade, match with exit time from Positions tab, calculate difference
+- If only Positions tab: entry time is unknown, use "" for entryTime and holdingTime
+- If only Deals tab: pair each "buy, in" entry with matching "sell, out" by price/sequence, calculate time difference
+
+CRITICAL RULES:
+1. READ ACTUAL DATES FROM SCREENSHOTS — never use today's date. 2026.06.24 = 2026-06-24
+2. ALL TIMES ARE MT5 SERVER TIME (UTC+3) — ADD 4 HOURS for WIB. Example: 16:10 MT5 = 20:10 WIB. If result exceeds 23:59, add 1 day to date
+3. IGNORE non-trade rows: Balance, Deposit, Withdrawal, Swap, Commission, Profit rows
+4. direction = "buy" or "sell" lowercase only
+5. pnl = exact positive number shown in blue. Skip rows with no pnl shown
+6. holdingTime = human readable like "22m", "2h 14m", "45s". Calculate from entry to exit time difference
+7. entryTime and exitTime must already be converted to WIB (+4h from what you see)
+
+MATCHING DEALS TO POSITIONS:
+- In Deals tab: "buy, in" at price X at time T1 matches "sell, out" at price Y at time T2
+- holdingTime = T2 minus T1 (already converted to WIB)
+- Match by entry price: the entry price in Positions (left side of →) = price in "buy, in" deal
+
+Return ONLY compact JSON, no markdown, no explanation:
+{"trades":[{"entryDate":"2026-06-24","entryTime":"20:10","exitDate":"2026-06-24","exitTime":"20:32","lot":0.01,"direction":"buy","entryPrice":3976.56,"exitPrice":3989.30,"holdingTime":"22m","pnl":12.74}],"summary":{"totalTrades":1,"totalPnl":12.74,"winCount":1,"lossCount":0,"netBalance":12.74},"sessionDate":"2026-06-24"}`;
+
+  const r = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':key,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body:JSON.stringify({
+      model:'claude-sonnet-4-6',
+      max_tokens:8000,
+      messages:[{role:'user',content:[...imageContents,{type:'text',text:prompt}]}]
+    })
+  });
+
+  if(!r.ok){
+    const err = await r.json().catch(()=>({}));
+    throw new Error('API error '+r.status+': '+(err.error?.message||r.statusText));
+  }
+
+  const data = await r.json();
+  const text = data.content?.map(c=>c.text||'').join('')||'';
+  let clean = text.replace(/```json|```/g,'').trim();
+
+  // Try to parse, with recovery for truncated JSON
+  let parsed;
+  try{
+    parsed = JSON.parse(clean);
+  }catch(e){
+    // Try to salvage truncated JSON
+    try{
+      const tradesMatch = clean.match(/"trades"\s*:\s*\[/);
+      if(tradesMatch){
+        let depth=0, inArray=false, lastGoodIdx=-1;
+        let i = tradesMatch.index;
+        while(i<clean.length){
+          if(clean[i]==='{') depth++;
+          if(clean[i]==='}'){
+            depth--;
+            if(depth===0) lastGoodIdx=i;
+          }
+          i++;
+        }
+        if(lastGoodIdx>-1){
+          const fixed = '{"trades":[' + clean.substring(clean.indexOf('[',tradesMatch.index)+1, lastGoodIdx+1) + '],"summary":{"totalTrades":0,"totalPnl":0,"winCount":0,"lossCount":0}}';
+          parsed = JSON.parse(fixed);
+          console.log('Recovered truncated JSON with',parsed.trades?.length,'trades');
+        }
+      }
+      if(!parsed) throw new Error('Cannot recover JSON');
+    }catch(e2){
+      throw new Error('JSON parse failed. Response: '+clean.slice(0,200));
+    }
+  }
+
+  if(!parsed || !parsed.trades){
+    throw new Error('No trades found in response');
+  }
+  return parsed;
+}
+
+
+function renderPhotoResults(parsed){
+  // Consolidate for preview
+  const consolidated=consolidateTrades(photoTrades);
+  const mergedCount=photoTrades.length-consolidated.length;
+  const totalPnl=photoSummary?.totalPnl??photoTrades.reduce((s,t)=>s+(t.pnl||0),0);
+  const winRate=photoSummary&&photoSummary.totalTrades?Math.round(photoSummary.winCount/photoSummary.totalTrades*100):0;
+  // Summary grid
+  document.getElementById('photo-summary-grid').innerHTML=`
+    <div class="scard"><div class="sl">Total P&L</div><div class="sv green">+$${totalPnl.toFixed(2)}</div></div>
+    <div class="scard"><div class="sl">Win Rate</div><div class="sv gold">${winRate}%</div></div>
+    <div class="scard"><div class="sl">Trades</div><div class="sv">${photoSummary?.totalTrades||photoTrades.length}</div></div>
+    <div class="scard"><div class="sl">Net Balance</div><div class="sv blue" style="color:var(--blue)">$${(photoSummary?.netBalance??totalPnl).toFixed(2)}</div></div>`;
+  if(photoSummary?.withdrawal){
+    document.getElementById('photo-summary-extra').textContent=`Withdrawal: $${photoSummary.withdrawal?.toFixed(2)} · Swap: $${photoSummary.swap??0} · Commission: $${photoSummary.commission??0}`;
+  }
+  if(parsed.notes){
+    document.getElementById('photo-summary-extra').textContent+=' | Notes: '+parsed.notes;
+  }
+  // Trade list
+  const list=document.getElementById('photo-trade-list');
+  // Show consolidated preview
+  if(mergedCount>0){
+    list.innerHTML='<div style="background:var(--gbg);border:1px solid #1a3a10;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--green)">✓ '+mergedCount+' duplicate group'+(mergedCount>1?'s':'')+' will be merged — '+photoTrades.length+' trades → '+consolidated.length+' combined rows</div>'+
+    consolidated.map((t,i)=>`
+    <div style="background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:11px 13px;margin-bottom:7px;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center">
+      <span style="font-size:11px;color:var(--t3);font-weight:500">${i+1}</span>
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--text);font-family:var(--mono)">${t.entryPrice} → ${t.exitPrice}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:2px">${(t.direction||'').toUpperCase()} · ${t.lot} lot${t._count>1?' ('+t._count+'×merged)':''} · ${t.holdingTime||'—'} · ${t.entryDate||''} ${(t.entryTime||'').slice(0,5)}</div>
+      </div>
+      <span style="font-size:15px;font-weight:700;color:${(t.pnl||0)>=0?'var(--green)':'var(--red)'}">${(t.pnl||0)>=0?'+':''}$${(t.pnl||0).toFixed(2)}</span>
+    </div>`).join('');
+  } else {
+    list.innerHTML=photoTrades.map((t,i)=>`
+    <div style="background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:11px 13px;margin-bottom:7px;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center">
+      <span style="font-size:11px;color:var(--t3);font-weight:500">${i+1}</span>
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--text);font-family:var(--mono)">${t.entryPrice} → ${t.exitPrice}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:2px">${(t.direction||'').toUpperCase()} · ${t.lot} lot · ${t.holdingTime||'—'} · ${t.entryDate||''} ${(t.entryTime||'').slice(0,5)}</div>
+      </div>
+      <span style="font-size:15px;font-weight:700;color:${(t.pnl||0)>=0?'var(--green)':'var(--red)'}">${(t.pnl||0)>=0?'+':''}$${(t.pnl||0).toFixed(2)}</span>
+    </div>`).join('');
+  }
+}
+
+function consolidateTrades(rawTrades){
+  const groups={};
+  rawTrades.forEach(t=>{
+    const key=[
+      (t.direction||'').toLowerCase(),
+      t.entryPrice,
+      (t.entryTime||'').slice(0,5),
+      t.exitPrice,
+      (t.exitTime||'').slice(0,5),
+      t.entryDate||''
+    ].join('|');
+    if(!groups[key]){
+      groups[key]={...t,_count:1};
+    }else{
+      groups[key].lot=parseFloat(((groups[key].lot||0)+(t.lot||0)).toFixed(3));
+      groups[key].pnl=parseFloat(((groups[key].pnl||0)+(t.pnl||0)).toFixed(2));
+      groups[key]._count++;
+    }
+  });
+  return Object.values(groups);
+}
+
+function importPhotoTrades(){
+  if(!photoTrades.length){toast('No trades to import',true);return;}
+  const{today}=wibNow();
+  const sessionDate=photoSummary?.sessionDate||photoSummary?.date||today;
+  const consolidated=consolidateTrades(photoTrades);
+  const mergedCount=photoTrades.length-consolidated.length;
+  consolidated.forEach(t=>{
+    const pnl=t.pnl||0;
+    const dir=(t.direction||'buy').toUpperCase()==='BUY'?'BUY':'SELL';
+    let tradeDate=(t.entryDate||sessionDate).replace(/\./g,'-').replace(/\//g,'-');
+    // Normalize date formats to YYYY-MM-DD
+    if(tradeDate.match(/^\d{2}-\d{2}-\d{4}$/)){const p=tradeDate.split('-');tradeDate=p[2]+'-'+p[1]+'-'+p[0];}
+    else if(tradeDate.match(/^\d{2}\/\d{2}\/\d{4}$/)){const p=tradeDate.split('/');tradeDate=p[2]+'-'+p[1]+'-'+p[0];}
+    else if(tradeDate.match(/^\d{4}\/\d{2}\/\d{2}$/)){tradeDate=tradeDate.replace(/\//g,'-');}
+    // Convert MT5 server time (UTC+3) to WIB (UTC+7)
+    const wibEntry = mt5ToWIB(tradeDate, (t.entryTime||'').slice(0,5));
+    const wibExit  = mt5ToWIB(tradeDate, (t.exitTime||'').slice(0,5));
+    const finalDate = wibEntry.date || tradeDate;
+    const finalTime = wibEntry.time || (t.entryTime||'').slice(0,5);
+    const notes=t._count>1?
+      `Photo import: ${t.holdingTime||''} [${t._count} trades merged — total ${t.lot} lot]`:
+      `Photo import: ${t.holdingTime||''}`;
+    trades.unshift({
+      id:Date.now()+Math.random(),
+      date:finalDate.slice(0,10),
+      time:finalTime,
+      dir,type:'',session:'',
+      lot:t.lot||0.03,
+      entry:t.entryPrice||0,
+      exit:t.exitPrice||null,
+      eqOpen:equity,status:'CLOSED',pnl,
+      eqClose:equity+pnl,notes,
+      holdingTime:t.holdingTime||'',news:'',emotion:''
+    });
+    equity+=pnl;
+  });
+  DB.set('xau_trades',trades);DB.set('xau_equity',equity);
+  updateHdr();
+  const photoMsg=mergedCount>0?`Imported ${consolidated.length} trades (${mergedCount} duplicates merged) ✓`:`Imported ${consolidated.length} trades ✓`;
+  toast(photoMsg);
+  resetPhotoImport();
+  // Sync imported trades to cloud
+  if(sbConnected&&sbClient){
+    const st=document.getElementById('sb-status');
+    if(st){st.textContent='Syncing photo trades to cloud...';st.style.color='var(--t3)';}
+    syncToCloud().then(()=>{
+      if(st){st.textContent='✓ Photo trades synced to cloud';st.style.color='var(--green)';}
+    });
+  } else {
+    toast('Trades saved locally. Connect Supabase in Setup to sync to cloud.',false);
+  }
+}
+function exportPhotoCSV(){
+  if(!photoTrades.length)return;
+  const headers=['#','Direction','Entry','Exit','Lot','Exit Time','Holding','P&L'];
+  const rows=photoTrades.map((t,i)=>[i+1,t.direction,t.entryPrice,t.exitPrice,t.lot,t.exitTime||'',t.holdingTime||'',(t.pnl||0).toFixed(2)]);
+  const csv=[headers,...rows].map(r=>r.join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='xau_photo_trades_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  toast('CSV exported ✓');
+}
+
+function resetPhotoImport(){
+  photoImages=[];photoTrades=[];photoSummary=null;
+  document.getElementById('photo-preview-grid').style.display='none';
+  document.getElementById('photo-parse-btn').style.display='none';
+  document.getElementById('photo-status').style.display='none';
+  document.getElementById('photo-error').style.display='none';
+  document.getElementById('photo-results').style.display='none';
+  document.getElementById('photo-file-input').value='';
+}
+
+
+// ── Supabase Cloud Database ────────────────────────────────────────────────
+// ── Debug Supabase ─────────────────────────────────────────────────────────
+async function debugSB(){
+  const box = document.getElementById('sb-debug');
+  box.style.display = 'block';
+  box.textContent = 'Debugging...\n';
+
+  const creds = getSBCreds();
+  box.textContent += 'URL: ' + (creds.url ? creds.url.slice(0,30)+'...' : 'MISSING') + '\n';
+  box.textContent += 'Key: ' + (creds.key ? creds.key.slice(0,20)+'...' : 'MISSING') + '\n';
+  box.textContent += 'sbConnected: ' + sbConnected + '\n';
+  box.textContent += 'sbClient: ' + (sbClient?'exists':'null') + '\n\n';
+
+  if(!creds.url || !creds.key){
+    box.textContent += 'ERROR: Missing credentials\n';
+    return;
+  }
+
+  if(!sbClient){
+    box.textContent += 'Re-initializing client...\n';
+    sbClient = supabase.createClient(creds.url, creds.key);
+  }
+
+  try{
+    box.textContent += 'Fetching xau_trades...\n';
+    const { data, error, status, statusText } = await sbClient
+      .from('xau_trades').select('*').eq('user_id','winda').limit(5);
+    
+    box.textContent += 'Status: ' + status + ' ' + statusText + '\n';
+    if(error){
+      box.textContent += 'ERROR: ' + JSON.stringify(error) + '\n';
+    } else {
+      box.textContent += 'Rows returned: ' + (data?.length||0) + '\n';
+      if(data && data.length > 0){
+        box.textContent += 'First row keys: ' + Object.keys(data[0]).join(', ') + '\n';
+        box.textContent += 'First row: ' + JSON.stringify(data[0], null, 2) + '\n';
+      } else {
+        box.textContent += 'NO DATA — table might be empty or RLS blocking\n';
+        // Try without user_id filter
+        box.textContent += '\nTrying without user_id filter...\n';
+        const { data: d2, error: e2 } = await sbClient.from('xau_trades').select('*').limit(5);
+        box.textContent += 'Without filter — rows: ' + (d2?.length||0) + ' error: ' + (e2?JSON.stringify(e2):'none') + '\n';
+        if(d2 && d2.length > 0){
+          box.textContent += 'First row: ' + JSON.stringify(d2[0], null, 2) + '\n';
+        }
+      }
+    }
+  } catch(e){
+    box.textContent += 'EXCEPTION: ' + e.message + '\n' + e.stack + '\n';
+  }
+
+  // Check what user_ids exist
+  try{
+    box.textContent += '\nChecking all user_ids in table...\n';
+    const { data: uids } = await sbClient.from('xau_trades').select('user_id').limit(10);
+    if(uids) box.textContent += 'user_ids found: ' + JSON.stringify([...new Set(uids.map(r=>r.user_id))]) + '\n';
+  }catch(e){ box.textContent += 'Could not check user_ids\n'; }
+
+  // Check localStorage
+  box.textContent += '\nLocalStorage check:\n';
+  box.textContent += 'sb_url: ' + (localStorage.getItem('sb_url')?'set':'MISSING') + '\n';
+  box.textContent += 'sb_key: ' + (localStorage.getItem('sb_key')?'set':'MISSING') + '\n';
+  box.textContent += 'sb_url_raw: ' + (localStorage.getItem('sb_url_raw')?'set':'MISSING') + '\n';
+  box.textContent += 'xau_trades in localStorage: ' + (localStorage.getItem('xau_trades')?'set':'MISSING') + '\n';
+  box.textContent += 'local trades count: ' + trades.length + '\n';
+  box.textContent += 'local equity: ' + equity + '\n';
+}
+
+
+let sbClient = null;
+let sbConnected = false;
+
+function getSBCreds(){
+  let url = DB.get('sb_url','') || localStorage.getItem('sb_url_raw') || '';
+  let key = DB.get('sb_key','') || localStorage.getItem('sb_key_raw') || '';
+  // Also check memory cache
+  if(!url && DB._mem && DB._mem['sb_url']) url = DB._mem['sb_url'];
+  if(!key && DB._mem && DB._mem['sb_key']) key = DB._mem['sb_key'];
+  return { url: url.trim(), key: key.trim() };
+}
+function saveSB(){
+  const url=document.getElementById('sb-url').value.trim();
+  const key=document.getElementById('sb-key').value.trim();
+  if(url) DB.set('sb_url', url);
+  if(key) DB.set('sb_key', key);
+  // Force persist by reading back immediately
+  try{
+    localStorage.setItem('sb_url_raw', url);
+    localStorage.setItem('sb_key_raw', key);
+  }catch(e){}
+}
+
+async function initSupabase(){
+  const { url, key } = getSBCreds();
+  if(!url || !key) return false;
+  try{
+    sbClient = supabase.createClient(url, key);
+    // Create tables if they don't exist via RPC isn't available on anon
+    // Just test connection with a simple query
+    const { error } = await sbClient.from('xau_trades').select('id').limit(1);
+    if(error && error.code === '42P01'){
+      // Table doesn't exist yet — create it
+      await createTables();
+    }
+    sbConnected = true;
+    return true;
+  } catch(e){
+    console.error('Supabase init error:', e.message);
+    sbConnected = false;
+    return false;
+  }
+}
+
+async function createTables(){
+  // Use Supabase SQL editor to create tables — guide user
+  console.log('Tables need to be created in Supabase dashboard');
+}
+
+async function testSB(){
+  const st = document.getElementById('sb-status');
+  const { url, key } = getSBCreds();
+  if(!url || !key){ st.textContent = 'Enter URL and key first'; st.style.color='var(--red)'; return; }
+  st.textContent = 'Testing connection...'; st.style.color = 'var(--t3)';
+  try{
+    sbClient = supabase.createClient(url, key);
+    const { data, error } = await sbClient.from('xau_trades').select('id').limit(1);
+    if(error){
+      if(error.code === '42P01'){
+        st.textContent = '✓ Connected! Tables need setup — click "Create tables" below'; 
+        st.style.color = 'var(--gold)';
+        sbConnected = true;
+        showCreateTablesBtn();
+      } else {
+        st.textContent = 'Error: ' + error.message; st.style.color = 'var(--red)';
+      }
+    } else {
+      st.textContent = '✓ Connected — database ready! ' + (data?.length||0) + ' trades in cloud';
+      st.style.color = 'var(--green)';
+      sbConnected = true;
+      startRealtimeSync();
+    }
+  } catch(e){ st.textContent = 'Connection failed: ' + e.message; st.style.color = 'var(--red)'; }
+}
+
+function showCreateTablesBtn(){
+  const st = document.getElementById('sb-status');
+  st.innerHTML += '<br><button class="btn btn-gold btn-sm" style="margin-top:6px" onclick="createTablesManual()">Create tables now</button>';
+}
+
+async function createTablesManual(){
+  const st = document.getElementById('sb-status');
+  st.textContent = 'Creating tables...'; st.style.color = 'var(--t3)';
+  try{
+    // Create tables using raw SQL via rpc if available
+    // Otherwise guide user to run SQL in dashboard
+    const sql = `
+      create table if not exists xau_trades (
+        id bigint primary key,
+        user_id text default 'winda',
+        date text, time text, dir text, type text, session text,
+        lot numeric, entry numeric, exit numeric,
+        eq_open numeric, eq_close numeric, status text,
+        pnl numeric, notes text, news text, emotion text,
+        holding_time text, created_at timestamptz default now()
+      );
+      create table if not exists xau_withdrawals (
+        id bigint primary key,
+        user_id text default 'winda',
+        date text, amount numeric, eq_before numeric, eq_after numeric,
+        notes text, created_at timestamptz default now()
+      );
+      create table if not exists xau_analyses (
+        id bigint primary key,
+        user_id text default 'winda',
+        date text, type text, title text, body text,
+        takeaway text, saved text, created_at timestamptz default now()
+      );
+      create table if not exists xau_meta (
+        key text primary key,
+        user_id text default 'winda',
+        value text, updated_at timestamptz default now()
+      );
+    `;
+    // Try inserting a test record to see if table exists
+    const { error } = await sbClient.from('xau_trades').insert({
+      id: -1, user_id:'test', date:'test', dir:'test', status:'test'
+    });
+    if(error && error.code !== '23505'){ // 23505 = duplicate key (fine)
+      // Table doesn't exist — show SQL to user
+      st.innerHTML = `<span style="color:var(--gold)">Run this SQL in your Supabase dashboard → SQL Editor:</span><br>
+        <a href="${getSBCreds().url.replace('.supabase.co','')}.supabase.co/project/_/sql" target="_blank" style="color:var(--blue);font-size:10px">Open SQL Editor ↗</a>
+        <div style="background:var(--s3);border-radius:4px;padding:8px;margin-top:6px;font-family:var(--mono);font-size:9px;line-height:1.6;color:var(--text);white-space:pre-wrap;overflow-x:auto">${sql.trim()}</div>
+        <button class="btn btn-gold btn-sm" style="margin-top:8px" onclick="testSB()">Re-test after running SQL</button>`;
+    } else {
+      // Delete test record
+      await sbClient.from('xau_trades').delete().eq('id',-1);
+      st.textContent = '✓ Tables ready! Click Sync all data.'; st.style.color = 'var(--green)';
+      sbConnected = true;
+    }
+  } catch(e){ st.textContent = 'Error: ' + e.message; st.style.color = 'var(--red)'; }
+}
+
+async function sbSaveTrade(trade){
+  if(!sbClient){ console.warn('sbSaveTrade: no client'); return; }
+  if(!sbConnected){ console.warn('sbSaveTrade: not connected'); return; }
+  const row = {
+    id: Number(trade.id),
+    user_id: 'winda',
+    date: String(trade.date||''),
+    time: String(trade.time||''),
+    dir: String(trade.dir||''),
+    type: String(trade.type||''),
+    session: String(trade.session||''),
+    lot: Number(trade.lot)||0.03,
+    entry: Number(trade.entry)||0,
+    exit: trade.exit!=null ? Number(trade.exit) : null,
+    eq_open: trade.eqOpen!=null ? Number(trade.eqOpen) : null,
+    eq_close: trade.eqClose!=null ? Number(trade.eqClose) : null,
+    status: String(trade.status||'OPEN'),
+    pnl: trade.pnl!=null ? Number(trade.pnl) : null,
+    notes: String(trade.notes||''),
+    news: String(trade.news||''),
+    emotion: String(trade.emotion||''),
+    holding_time: String(trade.holdingTime||'')
+  };
+  try{
+    const { data, error } = await sbClient.from('xau_trades').upsert(row, {onConflict:'id'}).select();
+    if(error){
+      console.error('SB save trade error:', error.message, error.code, JSON.stringify(row).slice(0,100));
+      showCloudStatus('⚠️ Save failed: '+error.message, 'var(--red)');
+    } else {
+      console.log('Trade saved to cloud:', data?.length, 'rows');
+      showCloudStatus('☁️ Saved to cloud', 'var(--green)');
+    }
+  } catch(e){
+    console.error('SB trade exception:', e.message);
+    showCloudStatus('⚠️ Cloud error: '+e.message, 'var(--red)');
+  }
+}
+
+function showCloudStatus(msg, color){
+  // Show a small cloud save indicator in the header
+  let el = document.getElementById('cloud-status');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'cloud-status';
+    el.style.cssText = 'position:fixed;bottom:70px;right:12px;background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;z-index:999;transition:opacity .5s';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.color = color;
+  el.style.opacity = '1';
+  clearTimeout(el._timer);
+  el._timer = setTimeout(()=>el.style.opacity='0', 3000);
+}
+
+async function sbDeleteTrade(id){
+  if(!sbConnected || !sbClient) return;
+  try{ await sbClient.from('xau_trades').delete().eq('id', id); }
+  catch(e){ console.error('SB delete error:', e.message); }
+}
+
+async function sbSaveWithdrawal(w){
+  if(!sbConnected || !sbClient) return;
+  try{
+    const { error } = await sbClient.from('xau_withdrawals').upsert({
+      id: w.id, user_id: 'winda',
+      date: w.date, amount: w.amount,
+      eq_before: w.eqBefore||null, eq_after: w.eqAfter||null,
+      notes: w.notes||''
+    });
+    if(error) console.error('SB save withdrawal error:', error.message);
+  } catch(e){ console.error('SB withdrawal error:', e.message); }
+}
+
+async function sbSaveAnalysis(a){
+  if(!sbConnected || !sbClient) return;
+  try{
+    const { error } = await sbClient.from('xau_analyses').upsert({
+      id: a.id, user_id: 'winda',
+      date: a.date, type: a.type, title: a.title||'',
+      body: a.body, takeaway: a.takeaway||'', saved: a.saved
+    });
+    if(error) console.error('SB save analysis error:', error.message);
+  } catch(e){ console.error('SB analysis error:', e.message); }
+}
+
+async function sbSaveMeta(key, value){
+  if(!sbConnected || !sbClient) return;
+  try{
+    await sbClient.from('xau_meta').upsert({ key, user_id:'winda', value: String(value) });
+  } catch(e){ console.error('SB meta error:', e.message); }
+}
+
+async function syncToCloud(){
+  const st = document.getElementById('sb-status');
+  if(!sbClient || !sbConnected){
+    st.textContent = 'Reconnecting...'; st.style.color = 'var(--t3)';
+    const ok = await initSupabase();
+    if(!ok){ st.textContent = 'Cannot connect — check URL and key'; st.style.color = 'var(--red)'; return; }
+  }
+  st.textContent = 'Syncing '+trades.length+' trades...'; st.style.color = 'var(--t3)';
+  let saved=0, failed=0;
+  try{
+    // Sync trades one by one with error tracking
+    for(const t of trades){
+      const row={
+        id:String(t.id), user_id:'winda',
+        date:String(t.date||''), time:String(t.time||''),
+        dir:String(t.dir||''), type:String(t.type||''),
+        session:String(t.session||''),
+        lot:Number(t.lot)||0.03, entry:Number(t.entry)||0,
+        exit:t.exit!=null?Number(t.exit):null,
+        eq_open:t.eqOpen!=null?Number(t.eqOpen):null,
+        eq_close:t.eqClose!=null?Number(t.eqClose):null,
+        status:String(t.status||'OPEN'),
+        pnl:t.pnl!=null?Number(t.pnl):null,
+        notes:String(t.notes||''), news:String(t.news||''),
+        emotion:String(t.emotion||''), holding_time:String(t.holdingTime||'')
+      };
+      const{error}=await sbClient.from('xau_trades').upsert(row,{onConflict:'id'});
+      if(error){console.error('Trade sync error:',error.message,error.code);failed++;}
+      else saved++;
+      st.textContent='Syncing trades: '+saved+'/'+trades.length+(failed?' ('+failed+' failed)':'');
+    }
+    // Sync withdrawals
+    for(const w of withdrawals){ await sbSaveWithdrawal(w); }
+    // Sync analyses
+    for(const a of analyses){ await sbSaveAnalysis(a); }
+    // Sync equity
+    await sbSaveMeta('equity', equity);
+
+    const msg = failed>0?
+      '⚠️ '+saved+' saved, '+failed+' failed — check console':
+      '✓ Synced — '+saved+' trades, '+withdrawals.length+' withdrawals';
+    st.textContent = msg;
+    st.style.color = failed>0?'var(--gold)':'var(--green)';
+    toast(failed>0?'Sync partially failed — '+failed+' errors':'All data synced ✓');
+  } catch(e){
+    st.textContent = 'Sync error: ' + e.message;
+    st.style.color = 'var(--red)';
+    console.error('syncToCloud error:', e);
+  }
+}
+
+async function loadFromCloud(){
+  const st = document.getElementById('sb-status');
+  if(!sbConnected){ await testSB(); if(!sbConnected) return; }
+  if(!confirm('Load data from cloud? This will replace your current local data.')) return;
+  st.textContent = 'Loading from cloud...'; st.style.color = 'var(--t3)';
+  try{
+    // Load trades
+    const { data: tData, error: tErr } = await sbClient.from('xau_trades')
+      .select('*').eq('user_id','winda').order('date', {ascending:false});
+    if(tErr){ console.error('Load trades error:', tErr); throw tErr; }
+    console.log('Loaded trades from cloud:', tData?.length || 0);
+    if(tData !== null){
+      trades = (tData||[]).map(t=>({
+        id: Number(t.id),
+        date: t.date||'',
+        time: t.time||'',
+        dir: t.dir||'',
+        type: t.type||'',
+        session: t.session||'',
+        lot: Number(t.lot)||0.03,
+        entry: Number(t.entry)||0,
+        exit: t.exit!=null?Number(t.exit):null,
+        eqOpen: t.eq_open!=null?Number(t.eq_open):null,
+        eqClose: t.eq_close!=null?Number(t.eq_close):null,
+        status: t.status||'OPEN',
+        pnl: t.pnl!=null?Number(t.pnl):null,
+        notes: t.notes||'',
+        news: t.news||'',
+        emotion: t.emotion||'',
+        holdingTime: t.holding_time||''
+      }));
+      DB.set('xau_trades', trades);
+      console.log('Trades mapped and saved:', trades.length);
+    }
+    // Load withdrawals
+    const { data: wData } = await sbClient.from('xau_withdrawals')
+      .select('*').eq('user_id','winda').order('date', {ascending:false});
+    if(wData && wData.length > 0){
+      withdrawals = wData.map(w=>({
+        id: w.id, date: w.date, amount: w.amount,
+        eqBefore: w.eq_before, eqAfter: w.eq_after, notes: w.notes||''
+      }));
+      DB.set('xau_withdrawals', withdrawals);
+    }
+    // Load analyses
+    const { data: aData } = await sbClient.from('xau_analyses')
+      .select('*').eq('user_id','winda').order('date', {ascending:false});
+    if(aData && aData.length > 0){
+      analyses = aData.map(a=>({
+        id: a.id, date: a.date, type: a.type,
+        title: a.title||'', body: a.body,
+        takeaway: a.takeaway||'', saved: a.saved
+      }));
+      DB.set('xau_analyses', analyses);
+    }
+    // Load equity
+    const { data: mData } = await sbClient.from('xau_meta')
+      .select('value').eq('key','equity').eq('user_id','winda').single();
+    if(mData){ equity = parseFloat(mData.value)||300; DB.set('xau_equity', equity); }
+
+    updateHdr(); renderDash();
+    // Refresh any open tab
+    if(document.getElementById('panel-trades')?.classList.contains('active')){renderTrades();renderTradeStats();}
+    if(document.getElementById('panel-withdrawals')?.classList.contains('active'))renderWith();
+    if(document.getElementById('panel-analysis')?.classList.contains('active'))renderAnalysis();
+    if(document.getElementById('panel-equity')?.classList.contains('active'))renderEquityChart();
+    st.textContent = '✓ Loaded — '+trades.length+' trades, '+withdrawals.length+' withdrawals, '+analyses.length+' analyses';
+    st.style.color = 'var(--green)';
+    console.log('Load complete — trades:', trades.length, 'withdrawals:', withdrawals.length);
+    toast('Data loaded from cloud ✓');
+  } catch(e){ st.textContent = 'Load error: ' + e.message; st.style.color = 'var(--red)'; }
+}
+
+// Auto-sync equity to cloud whenever data changes
+async function autoSync(){
+  if(!sbConnected) return;
+  await sbSaveMeta('equity', equity);
+}
+
+// Real-time listener — detects changes from other devices and updates instantly
+function startRealtimeSync(){
+  if(!sbClient||!sbConnected) return;
+  try{
+    sbClient
+      .channel('xau-realtime')
+      .on('postgres_changes',{event:'*',schema:'public',table:'xau_trades'},async()=>{
+        await silentLoadTrades();
+      })
+      .on('postgres_changes',{event:'*',schema:'public',table:'xau_withdrawals'},async()=>{
+        await silentLoadWithdrawals();
+      })
+      .on('postgres_changes',{event:'*',schema:'public',table:'xau_meta'},async()=>{
+        await silentLoadMeta();
+      })
+      .subscribe((status)=>{
+        if(status==='SUBSCRIBED'){
+          console.log('Real-time sync active');
+          const st=document.getElementById('sb-status');
+          if(st){st.textContent='✓ Connected — real-time sync active';st.style.color='var(--green)';}
+        }
+      });
+  }catch(e){console.warn('Realtime not available:',e.message);}
+}
+
+// Silent background loaders — update data without disrupting UI
+async function silentLoadTrades(){
+  if(!sbClient||!sbConnected)return;
+  try{
+    const{data}=await sbClient.from('xau_trades').select('*').eq('user_id','winda').order('date',{ascending:false});
+    if(!data)return;
+    trades=data.map(t=>({
+      id:Number(t.id),date:t.date||'',time:t.time||'',dir:t.dir||'',
+      type:t.type||'',session:t.session||'',
+      lot:Number(t.lot)||0.03,entry:Number(t.entry)||0,
+      exit:t.exit!=null?Number(t.exit):null,
+      eqOpen:t.eq_open!=null?Number(t.eq_open):null,
+      eqClose:t.eq_close!=null?Number(t.eq_close):null,
+      status:t.status||'OPEN',pnl:t.pnl!=null?Number(t.pnl):null,
+      notes:t.notes||'',news:t.news||'',
+      emotion:t.emotion||'',holdingTime:t.holding_time||''
+    }));
+    DB.set('xau_trades',trades);
+    updateHdr();renderDash();
+    // Refresh current tab if trades tab is open
+    if(document.getElementById('panel-trades').classList.contains('active')){renderTrades();renderTradeStats();}
+  }catch(e){console.warn('Silent load trades error:',e.message);}
+}
+
+async function silentLoadWithdrawals(){
+  if(!sbClient||!sbConnected)return;
+  try{
+    const{data}=await sbClient.from('xau_withdrawals').select('*').eq('user_id','winda').order('date',{ascending:false});
+    if(!data)return;
+    withdrawals=data.map(w=>({id:w.id,date:w.date,amount:w.amount,eqBefore:w.eq_before,eqAfter:w.eq_after,notes:w.notes||''}));
+    DB.set('xau_withdrawals',withdrawals);
+    if(document.getElementById('panel-withdrawals').classList.contains('active'))renderWith();
+  }catch(e){console.warn('Silent load withdrawals error:',e.message);}
+}
+
+async function silentLoadMeta(){
+  if(!sbClient||!sbConnected)return;
+  try{
+    const{data}=await sbClient.from('xau_meta').select('value').eq('key','equity').eq('user_id','winda').single();
+    if(data){equity=parseFloat(data.value)||300;DB.set('xau_equity',equity);updateHdr();}
+  }catch(e){console.warn('Silent load meta error:',e.message);}
+}
+
+
+// ── Export to CSV (Excel / Google Sheets compatible) ──────────────────────
+function exportCSV(){
+  function esc(v){
+    if(v==null) return '""';
+    return '"'+String(v).replace(/"/g,'""').replace(/[\r\n,]/g,' ')+'"';
+  }
+  function row(arr){ return arr.map(esc).join(',')+'\n'; }
+
+  let csv = '\uFEFF'; // BOM for Excel
+
+  // === TRADE LOG ===
+  csv += '\n=== TRADE LOG ===\n';
+  csv += row(['#','Date WIB','Time WIB','Direction','Type','Session','Lot','Entry','Exit','PnL','Holding','Emotion','Eq Open','Eq Close','Status','News','Notes']);
+  const sorted = trades.slice().sort((a,b)=>a.date+a.time>b.date+b.time?1:-1);
+  sorted.forEach((t,i)=>{
+    csv += row([i+1,t.date,t.time,t.dir,t.type,t.session,t.lot,t.entry,t.exit,t.pnl,t.holdingTime,t.emotion,t.eqOpen,t.eqClose,t.status,t.news,t.notes]);
+  });
+
+  // === DAILY SUMMARY ===
+  csv += '\n=== DAILY SUMMARY ===\n';
+  csv += row(['Date','Total PnL','Trades','Wins','Losses','Win%','Hit $40?','Running Equity']);
+  const byDay={};
+  trades.filter(t=>t.pnl!=null&&t.date).forEach(t=>{
+    if(!byDay[t.date])byDay[t.date]={pnl:0,trades:0,wins:0,losses:0};
+    byDay[t.date].pnl+=t.pnl;
+    byDay[t.date].trades++;
+    t.pnl>0?byDay[t.date].wins++:byDay[t.date].losses++;
+  });
+  let runEq=300;
+  Object.keys(byDay).sort().forEach(d=>{
+    const day=byDay[d];
+    runEq+=day.pnl;
+    csv+=row([d,day.pnl.toFixed(2),day.trades,day.wins,day.losses,Math.round(day.wins/day.trades*100),day.pnl>=40?'YES':'no',runEq.toFixed(2)]);
+  });
+
+  // === WITHDRAWALS ===
+  csv += '\n=== WITHDRAWALS ===\n';
+  csv += row(['#','Date','Amount','Eq Before','Eq After','Notes']);
+  withdrawals.forEach((w,i)=>{
+    csv+=row([i+1,w.date,w.amount,w.eqBefore,w.eqAfter,w.notes]);
+  });
+
+  // === PERFORMANCE STATS ===
+  csv += '\n=== PERFORMANCE STATS ===\n';
+  csv += row(['Metric','Value']);
+  const closed=trades.filter(t=>t.status==="CLOSED"&&t.pnl!=null);
+  const wins=closed.filter(t=>t.pnl>0);
+  const losses=closed.filter(t=>t.pnl<=0);
+  const gw=wins.reduce((s,t)=>s+t.pnl,0);
+  const gl=Math.abs(losses.reduce((s,t)=>s+t.pnl,0));
+  const tw=withdrawals.reduce((s,w)=>s+w.amount,0);
+  csv+=row(['Total Closed Trades',closed.length]);
+  csv+=row(['Win Rate',closed.length?Math.round(wins.length/closed.length*100)+'%':'n/a']);
+  csv+=row(['Total Profit',gw.toFixed(2)]);
+  csv+=row(['Total Loss',gl.toFixed(2)]);
+  csv+=row(['Net PnL',(gw-gl).toFixed(2)]);
+  csv+=row(['Profit Factor',gl>0?(gw/gl).toFixed(2):'inf']);
+  csv+=row(['Best Trade',wins.length?Math.max(...wins.map(t=>t.pnl)).toFixed(2):'n/a']);
+  csv+=row(['Worst Trade',losses.length?Math.min(...losses.map(t=>t.pnl)).toFixed(2):'n/a']);
+  csv+=row(['Avg Win',wins.length?(gw/wins.length).toFixed(2):'n/a']);
+  csv+=row(['Avg Loss',losses.length?(gl/losses.length).toFixed(2):'n/a']);
+  csv+=row(['Total Withdrawn',tw.toFixed(2)]);
+  csv+=row(['Withdrawal Cycles',withdrawals.length]);
+  csv+=row(['Current Equity',equity.toFixed(2)]);
+  csv+='\n';
+  csv+=row(['--- BY SESSION ---','']);
+  csv+=row(['Session','Trades|Wins|Win%|PnL']);
+  ['London','NewYork','Asian','Other'].forEach(s=>{
+    const st=closed.filter(t=>t.session===s);
+    if(!st.length)return;
+    const sw=st.filter(t=>t.pnl>0);
+    const sp=st.reduce((s,t)=>s+t.pnl,0);
+    csv+=row([s,st.length+'|'+sw.length+'|'+Math.round(sw.length/st.length*100)+'%|$'+sp.toFixed(2)]);
+  });
+  csv+='\n';
+  csv+=row(['--- BY EMOTION ---','']);
+  const emoNames={calm:'Calm',confident:'Confident',anxious:'Anxious',greedy:'Greedy',revenge:'Revenge',tired:'Tired',excited:'Excited',fomo:'FOMO',focused:'Focused',neutral:'Neutral'};
+  const emoStats={};
+  closed.filter(t=>t.emotion).forEach(t=>{
+    if(!emoStats[t.emotion])emoStats[t.emotion]={w:0,l:0,pnl:0};
+    t.pnl>0?emoStats[t.emotion].w++:emoStats[t.emotion].l++;
+    emoStats[t.emotion].pnl+=t.pnl;
+  });
+  Object.entries(emoStats).forEach(([k,v])=>{
+    const tot=v.w+v.l;
+    csv+=row([emoNames[k]||k,tot+'|'+v.w+'|'+Math.round(v.w/tot*100)+'%|$'+v.pnl.toFixed(2)]);
+  });
+
+  // === ANALYSIS LOG ===
+  csv += '\n=== ANALYSIS LOG ===\n';
+  csv += row(['Date','Type','Title','Analysis','Takeaways']);
+  analyses.forEach(a=>{
+    csv+=row([a.date,a.type,a.title,(a.body||'').slice(0,300),(a.takeaway||'')]);
+  });
+
+  // Download
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='XAU_Tracker_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  toast('Exported ✓ — open in Excel or Google Sheets');
+}
+// ── Init ───────────────────────────────────────────────────────────────────
+(function init(){
+  const{today,wib}=wibNow();
+  // Load saved creds
+  const tok=DB.get('tg_token','');const cid=DB.get('tg_chatid','');const key=DB.get('anthropic_key','');
+  const fhkey=DB.get('fh_key','');
+  if(fhkey&&document.getElementById('fh-key'))document.getElementById('fh-key').value=fhkey;
+  const burl=DB.get('backend_url','')||'https://xau-tracker-backend.onrender.com';
+  DB.set('backend_url', burl);
+  if(document.getElementById('backend-url'))document.getElementById('backend-url').value=burl;
+  if(tok)document.getElementById('tg-tok').value=tok;
+  if(cid)document.getElementById('tg-cid').value=cid;
+  if(key)document.getElementById('api-key').value=key;
+  // Set defaults
+  setFormDef();
+  document.getElementById('w-date').value=today;
+  document.getElementById('w-before').value=equity.toFixed(2);
+  document.getElementById('an-date').value=today;
+  document.getElementById('ni-date').value=today;
+  document.getElementById('ni-time').value=wib.toTimeString().slice(0,5);
+  // Render
+  updateHdr();renderDash();renderOpenSel();
+  loadLiveCal(); // loads FinnHub if key set, falls back to hardcoded
+  // Timers
+  // Load Supabase credentials
+  const sbUrl=DB.get('sb_url',''); const sbKey=DB.get('sb_key','');
+  if(sbUrl&&document.getElementById('sb-url'))document.getElementById('sb-url').value=sbUrl;
+  if(sbKey&&document.getElementById('sb-key'))document.getElementById('sb-key').value=sbKey;
+  // Init Supabase and auto-load from cloud
+  const sbUrlCheck = getSBCreds().url;
+  const sbKeyCheck = getSBCreds().key;
+  if(sbUrlCheck && sbKeyCheck){
+    const st=document.getElementById('sb-status');
+    if(st){st.textContent='Connecting to cloud...';st.style.color='var(--t3)';}
+    initSupabase().then(ok=>{
+      if(ok){
+        if(st){st.textContent='✓ Cloud connected — loading data...';st.style.color='var(--green)';}
+        loadFromCloud().then(()=>{
+          startRealtimeSync();
+          if(st){st.textContent='✓ Cloud connected — real-time sync active';st.style.color='var(--green)';}
+        });
+      } else {
+        if(st){st.textContent='Cloud connection failed — using local data';st.style.color='var(--gold)';}
+      }
+    });
+  } else {
+    const st=document.getElementById('sb-status');
+    if(st){st.textContent='Enter Supabase URL and key to enable cloud sync';st.style.color='var(--t3)';}
+  }
+  if(getBackendUrl())pushConfigToBackend();
+  setInterval(runNewsChecks,5*60*1000);
+  // Auto-sync every 2 minutes
+  setInterval(autoSync,2*60*1000);
+  setInterval(()=>renderCal(),60*1000);
+  runNewsChecks();
+// ── Photo Import ──────────────────────────────────────────────────────────────
+let posImages=[], dealImages=[], photoTrades=[], dealData=[], photoSummary=null;
+
+function handlePosFiles(e){
+  posImages=Array.from(e.target.files).filter(f=>f.type.startsWith('image/'));
+  renderPosPreview();
+}
+function handleDealFiles(e){
+  dealImages=Array.from(e.target.files).filter(f=>f.type.startsWith('image/'));
+  renderDealPreview();
+}
+
+function renderPosPreview(){
+  const prev=document.getElementById('pos-preview');
+  const btn=document.getElementById('pos-parse-btn');
+  if(!posImages.length){
+    prev.style.display='none';
+    if(btn)btn.style.display='none';
+    return;
+  }
+  prev.style.display='grid';
+  prev.innerHTML=posImages.map((img,i)=>{
+    const url=URL.createObjectURL(img);
+    return '<div style="position:relative;border-radius:6px;overflow:hidden;border:1px solid var(--border);height:100px"><img src="'+url+'" style="width:100%;height:100%;object-fit:cover"><span style="position:absolute;bottom:2px;left:2px;background:rgba(0,0,0,.8);color:#fff;font-size:10px;padding:2px 5px;border-radius:3px">'+(i+1)+'/'+posImages.length+'</span></div>';
+  }).join('');
+  if(btn){
+    btn.style.display='block';
+    btn.textContent='Extract from '+posImages.length+' Positions screenshot'+(posImages.length>1?'s':'');
+  }
+}
+
+function renderDealPreview(){
+  const prev=document.getElementById('deal-preview');
+  const btn=document.getElementById('deal-parse-btn');
+  if(!dealImages.length){
+    prev.style.display='none';
+    if(btn)btn.style.display='none';
+    return;
+  }
+  prev.style.display='grid';
+  prev.innerHTML=dealImages.map((img,i)=>{
+    const url=URL.createObjectURL(img);
+    return '<div style="position:relative;border-radius:6px;overflow:hidden;border:1px solid var(--border);height:100px"><img src="'+url+'" style="width:100%;height:100%;object-fit:cover"><span style="position:absolute;bottom:2px;left:2px;background:rgba(0,0,0,.8);color:#fff;font-size:10px;padding:2px 5px;border-radius:3px">'+(i+1)+'/'+dealImages.length+'</span></div>';
+  }).join('');
+  if(btn){
+    btn.style.display='block';
+    btn.textContent='Extract times from '+dealImages.length+' Deals screenshot'+(dealImages.length>1?'s':'');
+  }
+}
+
+async function parsePositions(){
+  const key=DB.get('anthropic_key','');
+  if(!key){showPhotoError('No Anthropic API key. Go to Setup tab.');return;}
+  if(!posImages.length)return;
+  const st=document.getElementById('pos-status');
+  const btn=document.getElementById('pos-parse-btn');
+  btn.disabled=true;
+  photoTrades=[];
+  // Process 1 image at a time for reliability
+  for(let i=0;i<posImages.length;i++){
+    st.textContent=`Processing Positions screenshot ${i+1} of ${posImages.length}...`;
+    st.style.color='var(--t3)';
+    try{
+      const result=await parseOneImage(posImages[i],key,'positions');
+      if(result&&result.trades) photoTrades=photoTrades.concat(result.trades);
+      if(!photoSummary&&result&&result.summary) photoSummary=result.summary;
+    }catch(e){
+      console.warn('Positions image',i+1,'failed:',e.message);
+      st.textContent=`Screenshot ${i+1} failed: ${e.message}`;st.style.color='var(--red)';
+    }
+  }
+  if(!photoTrades.length){
+    showPhotoError('No trades found. Make sure Positions tab is visible and clear.');
+    btn.disabled=false;return;
+  }
+  st.textContent=`✓ Found ${photoTrades.length} trades. Now add Deals screenshots for holding times, or import directly.`;
+  st.style.color='var(--green)';
+  btn.disabled=false;
+  renderPhotoResults();
+}
+
+async function parseDeals(){
+  const key=DB.get('anthropic_key','');
+  if(!key){showPhotoError('No Anthropic API key. Go to Setup tab.');return;}
+  if(!dealImages.length)return;
+  const st=document.getElementById('deal-status');
+  const btn=document.getElementById('deal-parse-btn');
+  btn.disabled=true;
+  dealData=[];
+  // Process 1 image at a time
+  for(let i=0;i<dealImages.length;i++){
+    st.textContent=`Processing Deals screenshot ${i+1} of ${dealImages.length}...`;
+    st.style.color='var(--t3)';
+    try{
+      const result=await parseOneImage(dealImages[i],key,'deals');
+      if(result&&result.deals) dealData=dealData.concat(result.deals);
+    }catch(e){
+      console.warn('Deals image',i+1,'failed:',e.message);
+    }
+  }
+  if(!dealData.length){
+    st.textContent='No deal entries found. Holding times will show as unknown.';
+    st.style.color='var(--gold)';
+    btn.disabled=false;return;
+  }
+  // Merge holding times into existing trades
+  mergeHoldingTimes();
+  st.textContent=`✓ Holding times calculated from ${dealData.length} deal entries`;
+  st.style.color='var(--green)';
+  btn.disabled=false;
+  renderPhotoResults();
+}
+
+async function parseOneImage(imgFile, key, mode){
+  const reader=new FileReader();
+  const dataUrl=await new Promise(r=>{reader.onload=e=>r(e.target.result);reader.readAsDataURL(imgFile);});
+  const b64=dataUrl.split(',')[1];
+  const mediaType=imgFile.type||'image/png';
+
+  const posPrompt=`This is an MT5 Positions tab screenshot showing completed XAUUSD trades.
+Extract every trade row visible. Ignore Balance, Deposit, Withdrawal, Profit summary rows.
+ALL TIMES ARE UTC+3 — ADD 4 HOURS for WIB. Example: 16:32 becomes 20:32 WIB.
+Return ONLY compact JSON:
+{"trades":[{"entryDate":"2026-06-24","entryTime":"","exitDate":"2026-06-24","exitTime":"20:32","lot":0.01,"direction":"buy","entryPrice":3976.56,"exitPrice":3989.30,"holdingTime":"","pnl":12.74}],"sessionDate":"2026-06-24"}`;
+
+  const dealPrompt=`This is an MT5 Deals tab screenshot showing buy,in and sell,out entries.
+Extract every deal row. Ignore Balance, Deposit, Withdrawal rows.
+ALL TIMES ARE UTC+3 — ADD 4 HOURS for WIB. Example: 16:10 becomes 20:10 WIB.
+Return ONLY compact JSON:
+{"deals":[{"type":"in","price":3976.56,"lot":0.01,"date":"2026-06-24","time":"20:10"},{"type":"out","price":3989.30,"lot":0.01,"date":"2026-06-24","time":"20:32","pnl":12.74}],"sessionDate":"2026-06-24"}`;
+
+  const prompt=mode==='positions'?posPrompt:dealPrompt;
+
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({
+      model:'claude-haiku-4-5-20251001',
+      max_tokens:2000,
+      messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:mediaType,data:b64}},
+        {type:'text',text:prompt}
+      ]}]
+    })
+  });
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error('API '+r.status+': '+(e.error?.message||r.statusText));}
+  const data=await r.json();
+  const text=data.content?.map(c=>c.text||'').join('')||'';
+  const clean=text.replace(/```json|```/g,'').trim();
+  try{return JSON.parse(clean);}
+  catch(e){
+    // Try to extract partial JSON
+    const match=clean.match(/\{[\s\S]*\}/);
+    if(match){try{return JSON.parse(match[0]);}catch{}}
+    throw new Error('Could not parse response: '+clean.slice(0,100));
+  }
+}
+
+function mergeHoldingTimes(){
+  if(!dealData.length||!photoTrades.length)return;
+  // Build a list of "in" deals indexed by price
+  const inDeals=dealData.filter(d=>d.type==='in');
+  photoTrades.forEach(trade=>{
+    // Find matching "in" deal by entry price
+    const match=inDeals.find(d=>Math.abs(d.price-trade.entryPrice)<0.05);
+    if(match){
+      trade.entryTime=match.time||trade.entryTime;
+      trade.entryDate=match.date||trade.entryDate;
+      // Calculate holding time
+      if(trade.entryTime&&trade.exitTime){
+        const entryDt=new Date((trade.entryDate||trade.exitDate)+'T'+trade.entryTime+':00');
+        const exitDt=new Date((trade.exitDate||trade.entryDate)+'T'+trade.exitTime+':00');
+        const diffMs=exitDt-entryDt;
+        if(diffMs>=0){
+          const h=Math.floor(diffMs/3600000);
+          const m=Math.floor((diffMs%3600000)/60000);
+          const s=Math.floor((diffMs%60000)/1000);
+          trade.holdingTime=h>0?h+'h '+m+'m':m>0?m+'m '+s+'s':s+'s';
+        }
+      }
+    }
+  });
+}
+
+function showPhotoError(msg){
+  const el=document.getElementById('photo-error');
+  el.style.display='block';
+  el.innerHTML=msg;
+}
+
+function renderPhotoResults(){
+  document.getElementById('photo-error').style.display='none';
+  document.getElementById('photo-results').style.display='block';
+  const consolidated=consolidateTrades(photoTrades);
+  const totalPnl=consolidated.reduce((s,t)=>s+(t.pnl||0),0);
+  const wins=consolidated.filter(t=>t.pnl>0).length;
+  document.getElementById('photo-summary-grid').innerHTML=`
+    <div class="scard"><div class="sl">Trades</div><div class="sv">${consolidated.length}</div></div>
+    <div class="scard"><div class="sl">Total P&L</div><div class="sv green">+$${totalPnl.toFixed(2)}</div></div>
+    <div class="scard"><div class="sl">Win Rate</div><div class="sv gold">${consolidated.length?Math.round(wins/consolidated.length*100)+'%':'—'}</div></div>
+    <div class="scard"><div class="sl">Deals merged</div><div class="sv">${dealData.length}</div></div>`;
+
+  const withHolding=consolidated.filter(t=>t.holdingTime&&t.holdingTime!=='').length;
+  document.getElementById('photo-trade-list').innerHTML=
+    (withHolding>0?`<div style="font-size:11px;color:var(--green);margin-bottom:8px">✓ ${withHolding} trades have holding times calculated from Deals tab</div>`:'')
+    +consolidated.map((t,i)=>`
+    <div style="background:var(--s3);border:1px solid var(--border);border-radius:7px;padding:10px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <div>
+        <div style="font-size:12px;font-weight:500;color:var(--text);font-family:var(--mono)">${t.entryPrice} → ${t.exitPrice}</div>
+        <div style="font-size:10px;color:var(--t3);margin-top:2px">${(t.direction||'').toUpperCase()} · ${t.lot} lot · ${t.holdingTime||'—'} · ${t.entryDate||''} ${t.entryTime||''} → ${t.exitTime||''}</div>
+      </div>
+      <span style="font-size:14px;font-weight:700;color:${(t.pnl||0)>=0?'var(--green)':'var(--red)'}">${(t.pnl||0)>=0?'+':''}$${(t.pnl||0).toFixed(2)}</span>
+    </div>`).join('');
+}
+
+function importPhotoTrades(){
+  if(!photoTrades.length){toast('No trades to import',true);return;}
+  const{today}=wibNow();
+  const consolidated=consolidateTrades(photoTrades);
+  const mergedCount=photoTrades.length-consolidated.length;
+  consolidated.forEach(t=>{
+    const pnl=t.pnl||0;
+    const dir=(t.direction||'buy').toUpperCase()==='BUY'?'BUY':'SELL';
+    let tradeDate=(t.entryDate||t.exitDate||today).replace(/\./g,'-').replace(/\//g,'-');
+    if(tradeDate.match(/^\d{2}-\d{2}-\d{4}$/)){const p=tradeDate.split('-');tradeDate=p[2]+'-'+p[1]+'-'+p[0];}
+    const notes=t._count>1?`Photo import [${t._count} merged — total ${t.lot} lot] ${t.holdingTime||''}`:
+      `Photo import ${t.holdingTime?'holding '+t.holdingTime:''}`;
+    trades.unshift({
+      id:Date.now()+Math.random(),
+      date:tradeDate.slice(0,10),
+      time:t.entryTime||t.exitTime||'',
+      dir,type:'',session:'',
+      lot:t.lot||0.01,
+      entry:t.entryPrice||0,
+      exit:t.exitPrice||null,
+      eqOpen:equity,status:'CLOSED',pnl,
+      eqClose:equity+pnl,
+      holdingTime:t.holdingTime||'',
+      notes,news:'',emotion:''
+    });
+    equity+=pnl;
+  });
+  DB.set('xau_trades',trades);DB.set('xau_equity',equity);
+  updateHdr();
+  if(sbConnected&&sbClient) syncToCloud();
+  toast(mergedCount>0?`Imported ${consolidated.length} trades (${mergedCount} merged) ✓`:`Imported ${consolidated.length} trades ✓`);
+  resetPhotoImport();
+}
+
+function exportPhotoCSV(){
+  if(!photoTrades.length)return;
+  const consolidated=consolidateTrades(photoTrades);
+  let csv='#,Direction,Entry Date,Entry Time WIB,Exit Time WIB,Lot,Entry Price,Exit Price,Holding,P&L\n';
+  consolidated.forEach((t,i)=>{
+    csv+=`${i+1},${(t.direction||'').toUpperCase()},${t.entryDate||''},${t.entryTime||''},${t.exitTime||''},${t.lot},${t.entryPrice},${t.exitPrice},${t.holdingTime||''},${(t.pnl||0).toFixed(2)}\n`;
+  });
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='trades_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+
+function resetPhotoImport(){
+  posImages=[];dealImages=[];photoTrades=[];dealData=[];photoSummary=null;
+  ['pos-preview','deal-preview','photo-results','photo-error'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  });
+  ['pos-parse-btn','deal-parse-btn'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  });
+  ['pos-status','deal-status'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.textContent='';
+  });
+  ['pos-input','deal-input'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+}
+
+// Keep these stubs so old references don't break
+function handlePhotoSelect(){}
+function handlePhotoDrop(){}
+function parsePhotoTrades(){}
+async function parseBatch(){ return {trades:[]}; }
+})();
+</script>
+</body>
+</html>
